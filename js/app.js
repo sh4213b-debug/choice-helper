@@ -29,7 +29,11 @@
     history: document.getElementById('screen-history')
   };
   var el = {
-    modeList: document.getElementById('mode-list'),
+    orb: document.getElementById('orb'),
+    orbGlyph: document.getElementById('orb-glyph'),
+    orbDesc: document.getElementById('orb-desc'),
+    orbDots: document.getElementById('orb-dots'),
+    orbGo: document.getElementById('orb-go'),
     labelsTitle: document.getElementById('labels-title'),
     labelForm: document.getElementById('label-form'),
     labelInputs: document.getElementById('label-inputs'),
@@ -308,15 +312,79 @@
     return card;
   }
 
-  // ── 이벤트 핸들러 ───────────────────────────────────────────
-  // 모드 선택 → 라벨 화면
-  el.modeList.addEventListener('click', function (e) {
-    var btn = e.target.closest('.type-card');
-    if (!btn) return;
-    state.count = parseInt(btn.dataset.count, 10);
+  // ── 수정구슬 선택기 (스크롤/스와이프/키보드로 선택지 개수 1~4) ──
+  var GLYPHS = ['A', 'A / B', 'A / B / C', 'A / B / C / D'];
+  var sel = 1;                 // 현재 선택지 개수
+  var WHEEL_STEP = 40;         // 휠 누적 임계값
+  var SWIPE_STEP = 34;         // 스와이프 임계값(px)
+  var wheelAcc = 0;
+
+  function paintOrb() {
+    el.orbGlyph.textContent = GLYPHS[sel - 1];
+    el.orbDesc.textContent = i18n.t('card.' + sel);
+    el.orb.setAttribute('aria-valuenow', String(sel));
+    el.orb.setAttribute('aria-valuetext', GLYPHS[sel - 1]);
+    var dots = el.orbDots.children;
+    for (var i = 0; i < dots.length; i++) dots[i].classList.toggle('is-on', i < sel);
+    // 글리프 교체 시 짧은 "환영이 맺히는" 연출
+    el.orbGlyph.classList.remove('is-shift');
+    void el.orbGlyph.offsetWidth; // 리플로우로 애니메이션 재시작
+    el.orbGlyph.classList.add('is-shift');
+  }
+
+  function setSel(next) {
+    next = Math.max(1, Math.min(4, next));
+    if (next === sel) return;
+    sel = next;
+    paintOrb();
+  }
+
+  function proceed() {
+    state.count = sel;
     buildLabelInputs(state.count);
     show('labels');
+  }
+
+  // 데스크톱: 구슬 위에서 휠 → 선택 변경. 양 끝에서는 페이지 스크롤 통과.
+  el.orb.addEventListener('wheel', function (e) {
+    var dir = e.deltaY > 0 ? 1 : -1;
+    if ((dir > 0 && sel === 4) || (dir < 0 && sel === 1)) return; // 경계: 페이지 스크롤 허용
+    e.preventDefault();
+    wheelAcc += e.deltaY;
+    if (Math.abs(wheelAcc) >= WHEEL_STEP) {
+      setSel(sel + (wheelAcc > 0 ? 1 : -1));
+      wheelAcc = 0;
+    }
+  }, { passive: false });
+
+  // 모바일: 구슬 위 세로 스와이프 → 선택 변경 (위로=증가). 양 끝에서는 스크롤 통과.
+  var touchY = 0;
+  el.orb.addEventListener('touchstart', function (e) {
+    touchY = e.touches[0].clientY;
+  }, { passive: true });
+  el.orb.addEventListener('touchmove', function (e) {
+    var dy = e.touches[0].clientY - touchY;
+    var dir = dy < 0 ? 1 : -1; // 위로 쓸면 증가
+    if ((dir > 0 && sel === 4) || (dir < 0 && sel === 1)) return; // 경계: 페이지 스크롤 허용
+    e.preventDefault();
+    if (Math.abs(dy) >= SWIPE_STEP) {
+      setSel(sel + dir);
+      touchY = e.touches[0].clientY;
+    }
+  }, { passive: false });
+
+  // 키보드 접근성: 위/오른쪽=증가, 아래/왼쪽=감소, Enter/Space=시작
+  el.orb.addEventListener('keydown', function (e) {
+    switch (e.key) {
+      case 'ArrowUp': case 'ArrowRight': e.preventDefault(); setSel(sel + 1); break;
+      case 'ArrowDown': case 'ArrowLeft': e.preventDefault(); setSel(sel - 1); break;
+      case 'Enter': case ' ': e.preventDefault(); proceed(); break;
+    }
   });
+
+  el.orbGo.addEventListener('click', proceed);
+
+  paintOrb(); // 초기 표시
 
   // 라벨 입력 후 굴리기
   el.labelForm.addEventListener('submit', function (e) {
@@ -438,6 +506,7 @@
       }
     }
     renderGrades(); // 소개 등급표(항상 홈에 존재) 언어 반영
+    if (el.orbDesc) el.orbDesc.textContent = i18n.t('card.' + sel); // 구슬 설명 언어 반영
     if (!screens.history.classList.contains('is-hidden')) renderHistory();
     if (!screens.labels.classList.contains('is-hidden')) {
       el.labelsTitle.textContent =

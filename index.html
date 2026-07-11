@@ -25,38 +25,31 @@
 
     <!-- 1. 메인: 모드 선택 + 서비스 소개 콘텐츠 -->
     <section class="screen screen--home" id="screen-home">
-      <div class="oracle-glow" aria-hidden="true"></div>
-
-      <!-- 히어로: 도구(주사위 선택) -->
+      <!-- 히어로: 수정구슬 선택기 (스크롤/스와이프로 선택지 개수 변경) -->
       <div class="home-hero">
         <header class="app-header">
+          <span class="app-eyebrow" data-i18n="home.eyebrow" aria-hidden="true">운명을 굴리다</span>
           <h1 class="app-title" data-i18n="app.title">선택 도우미</h1>
           <p class="app-subtitle" data-i18n="home.subtitle">운명의 주사위에게 묻다</p>
         </header>
 
-        <div class="type-grid" id="mode-list">
-          <button class="type-card" data-count="1">
-            <span class="type-card__glyph">A</span>
-            <span class="type-card__sub">SINGLE CHOICE</span>
-            <span class="type-card__ko" data-i18n="card.1">단독 평가 (A)</span>
-          </button>
-          <button class="type-card" data-count="2">
-            <span class="type-card__glyph">A<em>/</em>B</span>
-            <span class="type-card__sub">COMPARISON</span>
-            <span class="type-card__ko" data-i18n="card.2">양자택일 (A/B)</span>
-          </button>
-          <button class="type-card" data-count="3">
-            <span class="type-card__glyph">A<em>/</em>B<em>/</em>C</span>
-            <span class="type-card__sub">TRIPLE CHOICE</span>
-            <span class="type-card__ko" data-i18n="card.3">삼자택일 (A/B/C)</span>
-          </button>
-          <button class="type-card" data-count="4">
-            <span class="type-card__glyph">A<em>/</em>B<em>/</em>C<em>/</em>D</span>
-            <span class="type-card__sub">MULTI CHOICE</span>
-            <span class="type-card__ko" data-i18n="card.4">다중선택 (A/B/C/D)</span>
-          </button>
+        <div class="orb-wrap">
+          <div class="orb" id="orb" role="slider" tabindex="0"
+               aria-valuemin="1" aria-valuemax="4" aria-valuenow="1"
+               aria-label="선택지 개수" aria-valuetext="A">
+            <span class="orb__halo" aria-hidden="true"></span>
+            <span class="orb__glass" aria-hidden="true"></span>
+            <span class="orb__shine" aria-hidden="true"></span>
+            <span class="orb__glyph" id="orb-glyph">A</span>
+          </div>
+          <div class="orb-dots" id="orb-dots" aria-hidden="true">
+            <span class="is-on"></span><span></span><span></span><span></span>
+          </div>
+          <p class="orb-desc" id="orb-desc">단독 평가 (A)</p>
         </div>
 
+        <p class="orb-hint" data-i18n="orb.hint">수정구슬을 스크롤하거나 위아래로 쓸어 선택지를 바꾸세요</p>
+        <button type="button" class="btn btn--primary orb-go" id="orb-go" data-i18n="orb.next">이 선택으로 시작</button>
         <button type="button" class="link-subtle" id="open-history" data-i18n="home.history">지난 기록 보기</button>
         <p class="scroll-cue" aria-hidden="true" data-i18n="home.scrollCue">아래로 내려 자세히 보기</p>
       </div>

@@ -32,7 +32,7 @@
 
 - **광고**: 원래 "광고 금지"였으나 **소유자 지시로 Google AdSense 게재로 변경됨**(client `ca-pub-7162141013722955`). 스크립트는 `index.html`·`privacy.html` `<head>`에, 소유권 확인은 루트 `ads.txt`. 광고 목적의 제3자 쿠키(Google)는 허용. **개인정보처리방침·홈 신뢰 문구는 이에 맞춰 갱신 완료** — 광고 관련 문구를 다시 "없음"으로 되돌리지 말 것.
 - **자체 트래킹·외부 API 호출·서버 저장은 여전히 금지.** 사용자가 입력한 선택지·굴림 기록·설정은 로컬(localStorage)에만 저장, 우리 서버 전송 없음. (AdSense 외 외부 호출 추가 금지.)
-- **외부 이미지/텍스처/HDRI 파일 다운로드·CDN·외부 URL 로드 금지** — 배경·텍스처는 전부 CSS/캔버스 절차 생성.
+- **외부 이미지/텍스처/HDRI 파일의 런타임 로드(CDN·외부 URL) 금지** — 3D 텍스처·환경맵은 캔버스/RoomEnvironment 절차 생성. **예외: 홈 배경은 소유자 지시로 참고 핀 이미지를 로컬 번들(`assets/bg-nebula.jpg`)해 사용**(외부 hotlink 아님). 저작권은 소유자 판단(수익화 전 라이선스/자체 이미지 교체 권고).
 - **Three.js 외 추가 라이브러리 금지** (로컬 번들, 버전 고정).
 - **확정 기획 임의 변경 금지.**
 - **커밋 메시지는 영어**, **사용자 보고는 한국어**.
@@ -72,10 +72,10 @@ README.md       실행·구조·배포 문서
 - **3D 주사위** (`dice3d.js`):
   - IcosahedronGeometry(비인덱스) + `computeVertexNormals`로 각진 면. `MeshPhysicalMaterial`(transmission/clearcoat/sheen) + `RoomEnvironment`→PMREM 환경맵.
   - 결과 면 정렬: `setFromUnitVectors(faceNormal, camDir(0,0,1))` → 감속 텀블. 탭하면 스킵.
-  - **현재 룩("Moon Dice" 참고)**: 반투명 보라 레진(세로 그라데이션 정점색) + **금박 인클루전(내부 부유 Points)** + **금색 숫자** + 금빛 sheen. nat20 골드 버스트/nat1 냉각 연출.
+  - **현재 룩(보라·마젠타 샤프 레진 참고)**: 반투명 유리 레진, 세로 그라데이션 정점색 **위 보라(0x854bb0)→아래 마젠타(0xc65a9e)**, **로즈골드/코퍼 숫자**, 마젠타 감쇠·핑크 sheen, 금박 인클루전 없음(맑은 스월). nat20 골드 버스트/nat1 냉각 연출.
   - WebGL 미지원 시 `app.js`가 CSS fallback 큐브로 자동 대체.
 - **테마 (우주·신비, 참고 핀터레스트 이미지 기반)**: `body`에 절차적 코스믹 배경 — 심우주 그라디언트 + 성운 radial-gradient + 금빛 천체광 + 별먼지, `body::before`(별 트윙클)/`body::after`(성운 드리프트). 외부 이미지 0개. `prefers-reduced-motion` 존중.
-- **홈 레이아웃**: `.home-hero`(첫 화면, 도구 정중앙) + `.home-content`(소개·이용법·등급표·FAQ·신뢰). 선택 카드는 **2×2 그리드 `minmax(0,1fr)`로 네 칸 동일 폭** 고정.
+- **홈 히어로 = 수정구슬 선택기(시그니처)**: 카드 그리드 폐기. 중앙 유리 구슬(`#orb`, role=slider) 위에서 **휠 스크롤/세로 스와이프/화살표키**로 선택지 개수 1~4를 바꾸면 구슬 안 글리프가 A→A/B→A/B/C→A/B/C/D로 맺힘(`GLYPHS` in app.js `paintOrb/setSel`). 점 인디케이터 + `card.N` 설명. 양 끝에서는 페이지 스크롤 통과(스크롤 트랩 방지). `#orb-go`(Enter/Space)로 라벨 화면 진행. `.home-content`(소개·이용법·Fate Scale·FAQ·신뢰)는 그 아래.
 - **타이포 시스템(3역할)**: 나눔명조(디스플레이+본문) + **시스템 모노 `--mono`**(유틸리티: 아이브로·주사위 눈·확률·데이터). 섹션은 무거운 글래스 카드 대신 금빛 헤어라인 + 모노 아이브로(정적 Latin: About/How it works/…)의 편집형. 아이브로는 i18n 아님(장식 라벨), 제목·본문은 data-i18n.
 - **시그니처 — 운명의 눈금(Fate Scale)**: 등급표를 세로 눈금으로 재해석. `app.js`의 `renderGrades()`가 `#grade-scale`에 rung 생성, **각 rung 높이 ∝ 확률**(`flex-grow=구간길이`). 20(정상, 금빛 발광)→1(바닥, 희미). `.fate-rung--<tier>`가 `--rung` 색 지정. 표(`grade-table`)는 폐기됨.
 
