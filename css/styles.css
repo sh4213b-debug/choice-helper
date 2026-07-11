@@ -2,17 +2,22 @@
    콘셉트: 보라/자수정 다크 배경 + 핑크 숫자. 모바일 우선. */
 
 :root {
-  --bg-0: #140b24;
-  --bg-1: #1f1138;
-  --bg-2: #2a1850;
+  /* 딥 네이비~차콜 베이스 (§3.1), 보라는 포인트로만 */
+  --bg-0: #0d1020;
+  --bg-1: #141a2e;
+  --bg-2: #241a44;
   --amethyst: #8b5cf6;
   --amethyst-soft: #a78bfa;
   --pink: #f472b6;
   --pink-bright: #ff7ac2;
   --text: #f3ecff;
   --text-dim: #b9a9d9;
+  --text-faint: #8a7bb0;
   --card: rgba(139, 92, 246, 0.10);
   --card-border: rgba(167, 139, 250, 0.28);
+  /* 시안의 "밝은 카드" 느낌을 다크 테마에 맞춰 살짝 밝은 표면으로 */
+  --type-card-bg: linear-gradient(180deg, rgba(58, 44, 92, 0.55), rgba(34, 24, 58, 0.55));
+  --type-card-border: rgba(167, 139, 250, 0.22);
   --radius: 18px;
   --shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
 }
@@ -81,41 +86,85 @@ body {
   font-size: 14px;
 }
 
-/* ── 모드 선택 버튼 ── */
-.mode-list {
-  display: flex;
-  flex-direction: column;
+/* ── 선택 타입 카드 (가로 배치, §3.2) ── */
+/* 데스크톱·태블릿: 한 줄 4개 / 좁은 모바일(≤480px): 2×2 */
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 14px;
   margin-top: auto;
   margin-bottom: auto;
 }
 
-.mode-btn {
+.type-card {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  width: 100%;
-  padding: 18px 20px;
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius);
-  background: var(--card);
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  min-height: 168px;
+  padding: 22px 14px;
+  border: 1px solid var(--type-card-border);
+  border-radius: 22px;
+  background: var(--type-card-bg);
   color: var(--text);
   cursor: pointer;
-  text-align: left;
-  transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease;
+  text-align: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  transition: transform 0.16s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.mode-btn:hover { background: rgba(139, 92, 246, 0.20); }
-.mode-btn:active { transform: scale(0.98); }
+.type-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.5);
+  border-color: var(--amethyst-soft);
+}
+.type-card:active { transform: translateY(-2px) scale(0.99); }
 
-.mode-btn--single {
-  border-color: rgba(244, 114, 182, 0.45);
-  background: linear-gradient(135deg, rgba(244, 114, 182, 0.16), rgba(139, 92, 246, 0.12));
+/* 큰 세리프 글리프. or·/·· 구분자는 작고 연하게 */
+.type-card__glyph {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 300;
+  font-size: 34px;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  margin-top: 8px;
+  color: var(--text);
+}
+.type-card__glyph em {
+  font-style: normal;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text-faint);
+  margin: 0 5px;
+  vertical-align: middle;
 }
 
-.mode-btn__label { font-size: 18px; font-weight: 700; }
-.mode-btn__hint { font-size: 13px; color: var(--text-dim); }
+.type-card__sub {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: var(--text-faint);
+}
+
+.type-card__ko {
+  margin-top: auto;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+/* 단독 평가 카드는 핑크 포인트로 "판정" 성격 구분 */
+.type-card--single {
+  border-color: rgba(244, 114, 182, 0.4);
+}
+.type-card--single .type-card__glyph { color: var(--pink-bright); }
+
+@media (max-width: 480px) {
+  .type-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .type-card { min-height: 150px; padding: 20px 12px; }
+  .type-card__glyph { font-size: 28px; }
+}
 
 /* ── 라벨 입력 ── */
 .label-form {

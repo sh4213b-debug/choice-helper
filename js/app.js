@@ -123,7 +123,7 @@
   // ── 이벤트 핸들러 ───────────────────────────────────────────
   // 모드 선택 → 라벨 화면
   el.modeList.addEventListener('click', function (e) {
-    var btn = e.target.closest('.mode-btn');
+    var btn = e.target.closest('.type-card');
     if (!btn) return;
     state.count = parseInt(btn.dataset.count, 10);
     buildLabelInputs(state.count);

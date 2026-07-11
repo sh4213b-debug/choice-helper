@@ -16,22 +16,26 @@
         <p class="app-subtitle">주사위를 굴려 결정을 도와드려요</p>
       </header>
 
-      <div class="mode-list" id="mode-list">
-        <button class="mode-btn mode-btn--single" data-count="1">
-          <span class="mode-btn__label">하나만 물어보기</span>
-          <span class="mode-btn__hint">이거 해도 될까?</span>
+      <div class="type-grid" id="mode-list">
+        <button class="type-card type-card--single" data-count="1">
+          <span class="type-card__glyph">A</span>
+          <span class="type-card__sub">SINGLE CHOICE</span>
+          <span class="type-card__ko">단독 평가 (A)</span>
         </button>
-        <button class="mode-btn" data-count="2">
-          <span class="mode-btn__label">A or B</span>
-          <span class="mode-btn__hint">둘 중 하나</span>
+        <button class="type-card" data-count="2">
+          <span class="type-card__glyph">A<em>or</em>B</span>
+          <span class="type-card__sub">COMPARISON</span>
+          <span class="type-card__ko">양자택일 (A or B)</span>
         </button>
-        <button class="mode-btn" data-count="3">
-          <span class="mode-btn__label">A or B or C</span>
-          <span class="mode-btn__hint">셋 중 하나</span>
+        <button class="type-card" data-count="3">
+          <span class="type-card__glyph">A<em>/</em>B<em>/</em>C</span>
+          <span class="type-card__sub">TRIPLE CHOICE</span>
+          <span class="type-card__ko">삼자택일 (A / B / C)</span>
         </button>
-        <button class="mode-btn" data-count="4">
-          <span class="mode-btn__label">A or B or C or D</span>
-          <span class="mode-btn__hint">넷 중 하나</span>
+        <button class="type-card" data-count="4">
+          <span class="type-card__glyph">A<em>·</em>B<em>·</em>C<em>·</em>D</span>
+          <span class="type-card__sub">MULTI CHOICE</span>
+          <span class="type-card__ko">다중선택 (A / B / C / D)</span>
         </button>
       </div>
     </section>
