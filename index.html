@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1a0f2e">
+  <title>선택 도우미 · Choice Helper</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <main class="app" id="app">
+    <!-- 1. 메인: 모드 선택 -->
+    <section class="screen screen--home" id="screen-home">
+      <header class="app-header">
+        <h1 class="app-title">선택 도우미</h1>
+        <p class="app-subtitle">주사위를 굴려 결정을 도와드려요</p>
+      </header>
+
+      <div class="mode-list" id="mode-list">
+        <button class="mode-btn mode-btn--single" data-count="1">
+          <span class="mode-btn__label">하나만 물어보기</span>
+          <span class="mode-btn__hint">이거 해도 될까?</span>
+        </button>
+        <button class="mode-btn" data-count="2">
+          <span class="mode-btn__label">A or B</span>
+          <span class="mode-btn__hint">둘 중 하나</span>
+        </button>
+        <button class="mode-btn" data-count="3">
+          <span class="mode-btn__label">A or B or C</span>
+          <span class="mode-btn__hint">셋 중 하나</span>
+        </button>
+        <button class="mode-btn" data-count="4">
+          <span class="mode-btn__label">A or B or C or D</span>
+          <span class="mode-btn__hint">넷 중 하나</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 2. 라벨 입력 -->
+    <section class="screen screen--labels is-hidden" id="screen-labels">
+      <header class="app-header">
+        <h2 class="screen-title" id="labels-title">선택지 이름 붙이기</h2>
+        <p class="app-subtitle">비워두면 A·B·C·D로 표시돼요</p>
+      </header>
+
+      <form class="label-form" id="label-form">
+        <div class="label-inputs" id="label-inputs"><!-- 동적 생성 --></div>
+        <div class="label-actions">
+          <button type="submit" class="btn btn--primary">주사위 굴리기</button>
+          <button type="button" class="btn btn--ghost" id="skip-btn">건너뛰기</button>
+        </div>
+      </form>
+      <button type="button" class="link-back" id="labels-back">← 처음으로</button>
+    </section>
+
+    <!-- 3. 결과 -->
+    <section class="screen screen--result is-hidden" id="screen-result">
+      <header class="app-header">
+        <h2 class="screen-title">결과</h2>
+      </header>
+
+      <p class="tie-banner is-hidden" id="tie-banner">동점이에요! 다시 굴려볼까요?</p>
+
+      <div class="result-list" id="result-list"><!-- 동적 생성 --></div>
+
+      <div class="result-actions">
+        <button type="button" class="btn btn--primary" id="reroll-btn">다시 굴리기</button>
+        <button type="button" class="btn btn--ghost" id="result-home">처음으로</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- 로직 먼저, 뷰 나중 (file:// 에서도 동작하도록 순서 로드) -->
+  <script src="js/dice.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

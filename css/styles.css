@@ -1,0 +1,281 @@
+/* styles.css — Choice Helper v0.1
+   콘셉트: 보라/자수정 다크 배경 + 핑크 숫자. 모바일 우선. */
+
+:root {
+  --bg-0: #140b24;
+  --bg-1: #1f1138;
+  --bg-2: #2a1850;
+  --amethyst: #8b5cf6;
+  --amethyst-soft: #a78bfa;
+  --pink: #f472b6;
+  --pink-bright: #ff7ac2;
+  --text: #f3ecff;
+  --text-dim: #b9a9d9;
+  --card: rgba(139, 92, 246, 0.10);
+  --card-border: rgba(167, 139, 250, 0.28);
+  --radius: 18px;
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo",
+    "Noto Sans KR", Roboto, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(1200px 800px at 50% -10%, var(--bg-2), transparent 60%),
+    radial-gradient(900px 600px at 90% 110%, rgba(244, 114, 182, 0.12), transparent 55%),
+    linear-gradient(180deg, var(--bg-1), var(--bg-0));
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: calc(env(safe-area-inset-top) + 32px) 20px
+           calc(env(safe-area-inset-bottom) + 32px);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.is-hidden { display: none !important; }
+
+.screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── 헤더 ── */
+.app-header { text-align: center; margin-bottom: 28px; }
+
+.app-title {
+  font-size: 30px;
+  font-weight: 800;
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
+  background: linear-gradient(120deg, var(--amethyst-soft), var(--pink-bright));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.screen-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+
+.app-subtitle {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+/* ── 모드 선택 버튼 ── */
+.mode-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.mode-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  padding: 18px 20px;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.mode-btn:hover { background: rgba(139, 92, 246, 0.20); }
+.mode-btn:active { transform: scale(0.98); }
+
+.mode-btn--single {
+  border-color: rgba(244, 114, 182, 0.45);
+  background: linear-gradient(135deg, rgba(244, 114, 182, 0.16), rgba(139, 92, 246, 0.12));
+}
+
+.mode-btn__label { font-size: 18px; font-weight: 700; }
+.mode-btn__hint { font-size: 13px; color: var(--text-dim); }
+
+/* ── 라벨 입력 ── */
+.label-form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  margin-top: 12px;
+}
+
+.label-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.label-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.label-input__badge {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  font-weight: 800;
+  color: var(--pink-bright);
+  background: rgba(244, 114, 182, 0.12);
+  border: 1px solid rgba(244, 114, 182, 0.3);
+}
+
+.label-input__field {
+  flex: 1;
+  padding: 13px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--card-border);
+  background: rgba(20, 11, 36, 0.6);
+  color: var(--text);
+  font-size: 16px; /* iOS 자동 확대 방지 */
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.label-input__field::placeholder { color: rgba(185, 169, 217, 0.55); }
+.label-input__field:focus { border-color: var(--amethyst); }
+
+.label-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── 공통 버튼 ── */
+.btn {
+  width: 100%;
+  padding: 15px 18px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform 0.12s ease, filter 0.2s ease;
+}
+
+.btn:active { transform: scale(0.98); }
+
+.btn--primary {
+  color: #1a0c2b;
+  background: linear-gradient(120deg, var(--amethyst-soft), var(--pink-bright));
+}
+.btn--primary:hover { filter: brightness(1.06); }
+
+.btn--ghost {
+  color: var(--text);
+  background: transparent;
+  border-color: var(--card-border);
+}
+.btn--ghost:hover { background: rgba(139, 92, 246, 0.12); }
+
+.link-back {
+  margin-top: 20px;
+  align-self: center;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* ── 결과 ── */
+.tie-banner {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 700;
+  color: var(--pink-bright);
+  background: rgba(244, 114, 182, 0.14);
+  border: 1px solid rgba(244, 114, 182, 0.4);
+}
+
+.result-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.result-card {
+  padding: 18px 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--card-border);
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.result-card__name {
+  font-size: 15px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.result-card__grade {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.result-card__meta {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/* 등급별 색 구분 (내추럴20/1의 특별 연출은 v0.2 예정) */
+.result-card--nat20 {
+  border-color: rgba(255, 209, 102, 0.7);
+  background: linear-gradient(135deg, rgba(255, 209, 102, 0.18), rgba(244, 114, 182, 0.14));
+}
+.result-card--nat20 .result-card__grade { color: #ffd166; }
+
+.result-card--t7 .result-card__grade,
+.result-card--t6 .result-card__grade { color: var(--pink-bright); }
+.result-card--t5 .result-card__grade,
+.result-card--t4 .result-card__grade { color: var(--amethyst-soft); }
+.result-card--t3 .result-card__grade,
+.result-card--t2 .result-card__grade { color: var(--text-dim); }
+
+.result-card--nat1 {
+  border-color: rgba(120, 120, 140, 0.5);
+  background: rgba(40, 30, 60, 0.5);
+}
+.result-card--nat1 .result-card__grade { color: #9aa0b5; }
+
+.result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+}
