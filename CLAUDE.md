@@ -45,17 +45,20 @@
 ## 3. 파일 구조
 
 ```
-index.html      진입점. SPA 4화면(home/labels/result/history) + 홈 소개 콘텐츠 + 사이트 푸터
-privacy.html    개인정보처리방침 (한/영, 독립 정적 페이지)
-css/styles.css  전체 스타일 (우주·신비 테마)
-fonts/          나눔명조 서브셋 woff2 (OFL, 로컬 번들)
+index.html      진입점. <head>에 AdSense·Clarity·폰트 프리로드. <body>에 배경 영상(.bg-video)
+                + SPA 4화면(home/labels/result/history) + 홈 소개 콘텐츠 + 사이트 푸터
+privacy.html    개인정보처리방침 (한/영, 독립 정적 페이지). AdSense·Clarity 스니펫 포함
+ads.txt         AdSense 소유권 확인 (pub-7162141013722955)
+css/styles.css  전체 스타일 (우주·신비 테마: 성운 영상 배경 + 금빛·상아 + 송명/나눔명조)
+fonts/          nanum-myeongjo.woff2(본문) + song-myung.woff2(디스플레이) — 둘 다 OFL 서브셋 로컬 번들
+assets/         bg-nebula.mp4(움직이는 배경, 1080p 772KB) + bg-nebula.jpg(poster/폴백, 1440×2880)
 js/dice.js      순수 로직: d20 굴림 + 8단계 등급 매핑 (DOM 비의존, SSOT)
 js/i18n.js      다국어(ko/en) 자동감지 + 토글 (localStorage), [data-i18n] 자동 갱신
 js/history.js   최근 10개 결과 (localStorage)
 js/share.js     결과 카드 Canvas 생성 + Web Share/다운로드
 js/dice3d.js    3D d20 렌더러 (Three.js, ES 모듈)
 js/vendor/      three.module.js r160 + RoomEnvironment (로컬 번들, import 경로 './three.module.js'로 패치)
-js/app.js       뷰/컨트롤러: 화면 전환·입력·결과·히스토리·등급표 렌더
+js/app.js       뷰/컨트롤러: 화면 전환·수정구슬 선택기·입력·결과·히스토리·등급표 렌더
 _headers        Cloudflare Pages 캐시/보안 헤더
 README.md       실행·구조·배포 문서
 ```
@@ -75,7 +78,7 @@ README.md       실행·구조·배포 문서
   - 결과 면 정렬: `setFromUnitVectors(faceNormal, camDir(0,0,1))` → 감속 텀블. 탭하면 스킵.
   - **현재 룩(보라·마젠타 샤프 레진 참고)**: 반투명 유리 레진, 세로 그라데이션 정점색 **위 보라(0x854bb0)→아래 마젠타(0xc65a9e)**, **로즈골드/코퍼 숫자**, 마젠타 감쇠·핑크 sheen, 금박 인클루전 없음(맑은 스월). nat20 골드 버스트/nat1 냉각 연출.
   - WebGL 미지원 시 `app.js`가 CSS fallback 큐브로 자동 대체.
-- **테마 (우주·신비, 참고 핀터레스트 이미지 기반)**: `body`에 절차적 코스믹 배경 — 심우주 그라디언트 + 성운 radial-gradient + 금빛 천체광 + 별먼지, `body::before`(별 트윙클)/`body::after`(성운 드리프트). 외부 이미지 0개. `prefers-reduced-motion` 존중.
+- **테마 (우주·신비)**: 배경은 **움직이는 성운 영상**(`.bg-video`, 고정 풀블리드, z-index -10) + `body::before` 정지 이미지 폴백(z-index -11) + `body::after` 가독성 비네트(z-index -9). `prefers-reduced-motion` 시 영상 숨김. 영상/이미지는 참고 핀 성운을 Higgsfield로 가공(업스케일·image-to-video)해 로컬 번들. (이전의 절차적 CSS 성운/별먼지는 이 영상 배경으로 대체됨.)
 - **홈 히어로 = 수정구슬 선택기(시그니처)**: 카드 그리드 폐기. 중앙 유리 구슬(`#orb`, role=slider) 위에서 **휠 스크롤/세로 스와이프/화살표키**로 선택지 개수 1~4를 바꾸면 구슬 안 글리프가 A→A/B→A/B/C→A/B/C/D로 맺힘(`GLYPHS` in app.js `paintOrb/setSel`). 점 인디케이터 + `card.N` 설명. 양 끝에서는 페이지 스크롤 통과(스크롤 트랩 방지). `#orb-go`(Enter/Space)로 라벨 화면 진행. `.home-content`(소개·이용법·Fate Scale·FAQ·신뢰)는 그 아래.
 - **타이포 시스템(3역할)**: **디스플레이 `--display` = 송명(Song Myung, OFL, `fonts/song-myung.woff2` 서브셋 40KB)** — 제목·섹션헤딩·구슬 글리프·눈금 등급명·문서 헤딩에 적용(고대비 천체 알마낙 톤). **본문 `--serif` = 나눔명조**(긴 콘텐츠 가독). **유틸리티 `--mono` = 시스템 모노**(아이브로·주사위 눈·확률). 섹션은 금빛 헤어라인 + 모노 아이브로(정적 Latin) 편집형. 송명 서브셋은 앱 전체 한글+Latin 텍스트 기준(`fontTools.subset --text-file`)이라 표시 글리프 누락 없음 — 새 한글 카피 추가 시 서브셋 재생성 필요.
 - **시그니처 — 운명의 눈금(Fate Scale)**: 등급표를 세로 눈금으로 재해석. `app.js`의 `renderGrades()`가 `#grade-scale`에 rung 생성, **각 rung 높이 ∝ 확률**(`flex-grow=구간길이`). 20(정상, 금빛 발광)→1(바닥, 희미). `.fate-rung--<tier>`가 `--rung` 색 지정. 표(`grade-table`)는 폐기됨.
@@ -86,9 +89,18 @@ README.md       실행·구조·배포 문서
 
 - **v0.1** 핵심 로직 · **v0.2** 주사위 애니메이션 + nat20/1 연출 · **v0.3** 히스토리 + 공유 · **v0.4** i18n · **v0.5** 반응형 + 배포 준비. (태그 v0.1~v0.5)
 
-### v0.5 이후 추가 작업
-1. **테마/주사위 개편**: 우주·신비 배경(절차적), 선택 카드 동일 폭 2×2 정중앙, 주사위를 보라+금 "Moon Dice"로. (커밋 `d603397`)
-2. **홈페이지 고품질 콘텐츠 개편** (AdSense 고품질 사이트 가이드 반영): 소개/이용법/등급표/FAQ/신뢰 콘텐츠 + 사이트 푸터 + `privacy.html`(한/영) + SEO 메타. **실제 광고·추적 코드는 넣지 않음**(제약 유지). (커밋 `0b4ac05`)
+### v0.5 이후 추가 작업 (시간순)
+1. **테마/주사위 개편**: 우주·신비 배경(절차적), 선택 카드 동일 폭 2×2 정중앙, 주사위를 보라+금 "Moon Dice"로. (`d603397`)
+2. **홈페이지 고품질 콘텐츠 개편** (AdSense 가이드 반영): 소개/이용법/등급표/FAQ/신뢰 + 사이트 푸터 + `privacy.html`(한/영) + SEO 메타. (`0b4ac05`)
+3. **디자인 격상** (frontend-design): 3역할 타이포(+모노 유틸리티), 편집형 섹션, 시그니처 **운명의 눈금(Fate Scale)** 도입. (`1d32b19`)
+4. **브라우저 검증 환경** 문서화(Playwright+Chromium/SwiftShader). (`628e801`)
+5. **Google AdSense 게재**(소유자 지시) + 개인정보처리방침/신뢰문구 갱신 + `ads.txt`. (`b91bb5b`)
+6. **Microsoft Clarity 분석 추가**(소유자 지시) + 개인정보 고지 갱신. (`8cae1ca`)
+7. **수정구슬 시그니처 개편**: 카드 그리드 폐기, 중앙 유리 구슬 스크롤/스와이프 선택기 + 성운 이미지 배경 + 주사위 보라·마젠타 로즈골드. (`0e7b93e`)
+8. **구슬 스크롤 고정 버그 수정** + 배경 4K 업스케일(정지). (`41cab61`)
+9. **움직이는 성운 영상 배경**(Higgsfield 1080p, x264 772KB) + **송명 디스플레이 폰트** 페어링. (`a031c4b`)
+
+> 이후 새 작업을 하면 이 목록에 한 줄씩 추가한다(커밋 해시 포함).
 
 ---
 
