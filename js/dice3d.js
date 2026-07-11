@@ -1,17 +1,17 @@
 /*
- * dice3d.js — 사실적인 3D d20 렌더러 (Three.js, v0.2.2)
- * 정이십면체 + 반투명 레진 재질 + 면별 숫자 텍스처 + 조명.
- * 굴림 애니메이션/연출은 v0.2.3에서 이 컨트롤러 위에 추가한다.
+ * dice3d.js — 반투명 레진 d20 렌더러 (Three.js)
+ * 3겹 구조: 외피(투명 레진 셸) ▶ 내부 인클루전(마블·금박) ▶ 글리터 파티클.
+ * 환경 반사는 RoomEnvironment(절차적, 오프라인) 기반 PMREM 환경맵으로 만든다.
+ * 지오메트리·굴림/결과 면 정렬 로직은 이전과 동일하게 유지한다.
  *
- * ES 모듈. 로드에 성공하면 window.ChoiceHelper.dice3d 를 노출한다.
- * 로드/생성 실패 시 app.js가 CSS fallback으로 대체한다.
+ * ES 모듈. 로드 성공 시 window.ChoiceHelper.dice3d 노출. 실패 시 app.js가 CSS fallback.
  */
 import * as THREE from './vendor/three.module.js';
+import { RoomEnvironment } from './vendor/RoomEnvironment.js';
 
 var NS = (window.ChoiceHelper = window.ChoiceHelper || {});
 
 var DIE_RADIUS = 1.15;
-var AMETHYST = 0x7b2fbe; // 자수정 보라 (기준색, §3.3)
 
 // ── WebGL 지원 여부 ─────────────────────────────────────────
 function isWebGLAvailable() {
@@ -26,35 +26,44 @@ function isWebGLAvailable() {
   }
 }
 
-// ── 숫자 텍스처 (캔버스, 금~핑크골드) ───────────────────────
+// ── 숫자 텍스처 (핑크골드 + 가는 외곽선, 세리프) ────────────
 function makeNumberTexture(n) {
-  var S = 160;
+  var S = 200;
   var c = document.createElement('canvas');
   c.width = c.height = S;
   var ctx = c.getContext('2d');
 
-  // 금~핑크골드 그라디언트 숫자 (#E8A87C ~ #F0B27A 계열)
-  var grad = ctx.createLinearGradient(0, S * 0.2, 0, S * 0.8);
-  grad.addColorStop(0, '#ffd9a0');
-  grad.addColorStop(0.5, '#f0b27a');
-  grad.addColorStop(1, '#e8a87c');
-
-  ctx.fillStyle = grad;
-  ctx.font = '700 ' + Math.round(S * 0.5) + 'px Georgia, "Times New Roman", serif';
+  ctx.font = '600 ' + Math.round(S * 0.52) + 'px Georgia, "Times New Roman", serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.shadowColor = 'rgba(255, 180, 120, 0.55)';
-  ctx.shadowBlur = S * 0.06;
-  ctx.fillText(String(n), S / 2, S / 2 + S * 0.02);
+  var cx = S / 2, cy = S / 2 + S * 0.02;
+  var str = String(n);
 
-  // 6/9 구분용 밑줄
+  // 은은한 발광 후광
+  ctx.shadowColor = 'rgba(240, 168, 130, 0.7)';
+  ctx.shadowBlur = S * 0.07;
+
+  // 핑크골드 그라디언트 채움 (#F0A882 계열)
+  var grad = ctx.createLinearGradient(0, S * 0.22, 0, S * 0.78);
+  grad.addColorStop(0, '#ffd0ab');
+  grad.addColorStop(0.5, '#f0a882');
+  grad.addColorStop(1, '#e08a6a');
+  ctx.fillStyle = grad;
+  ctx.fillText(str, cx, cy);
+
+  // 가는 어두운 외곽선 (밝은 면 위에서도 읽히도록)
+  ctx.shadowBlur = 0;
+  ctx.lineWidth = S * 0.012;
+  ctx.strokeStyle = 'rgba(90, 40, 25, 0.85)';
+  ctx.strokeText(str, cx, cy);
+
+  // 6/9 구분 밑줄
   if (n === 6 || n === 9) {
-    ctx.shadowBlur = 0;
-    ctx.strokeStyle = '#f0b27a';
+    ctx.strokeStyle = '#f0a882';
     ctx.lineWidth = S * 0.03;
     ctx.beginPath();
-    ctx.moveTo(S * 0.36, S * 0.72);
-    ctx.lineTo(S * 0.64, S * 0.72);
+    ctx.moveTo(S * 0.36, S * 0.74);
+    ctx.lineTo(S * 0.64, S * 0.74);
     ctx.stroke();
   }
 
@@ -64,58 +73,69 @@ function makeNumberTexture(n) {
   return tex;
 }
 
-// ── 스튜디오풍 환경맵 (레진 표면의 부드러운 하이라이트 반사) ──
-// 어두운 보라 베이스 위에 소프트박스 같은 밝은 반사광 몇 개를 얹어
-// 클리어코트/투과 표면이 사진처럼 빛을 물게 한다.
-function buildEnvironment(renderer) {
-  var W = 512, H = 256;
+// ── 내부 인클루전용 마블 텍스처 (보라·마젠타·흰색 소용돌이 + 금/오팔 반점) ──
+function makeMarbleTexture() {
+  var S = 512;
   var c = document.createElement('canvas');
-  c.width = W;
-  c.height = H;
+  c.width = c.height = S;
   var ctx = c.getContext('2d');
 
-  // 베이스: 위(하늘)는 보라, 아래(바닥)는 짙은 자수정
-  var g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0.0, '#2a1b52');
-  g.addColorStop(0.45, '#150d2c');
-  g.addColorStop(1.0, '#241041');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, W, H);
+  // 베이스: 짙은 보라
+  ctx.fillStyle = '#2a1147';
+  ctx.fillRect(0, 0, S, S);
 
-  // 소프트박스형 밝은 하이라이트 (반사로 잡히는 광원)
-  function softLight(x, y, rx, ry, color, alpha) {
-    var rg = ctx.createRadialGradient(x, y, 0, x, y, Math.max(rx, ry));
-    rg.addColorStop(0, color);
+  // 소용돌이치는 마블: 보라/마젠타/희끗한 흰색 소프트 블롭 다수
+  var swirl = ['#7b2fbe', '#c026d3', '#ede9fe', '#4c1d95', '#a21caf'];
+  for (var i = 0; i < 46; i++) {
+    var x = Math.random() * S, y = Math.random() * S;
+    var r = 40 + Math.random() * 150;
+    var col = swirl[(Math.random() * swirl.length) | 0];
+    var rg = ctx.createRadialGradient(x, y, 0, x, y, r);
+    rg.addColorStop(0, col);
     rg.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.translate(x, y);
-    ctx.scale(1, ry / rx);
-    ctx.translate(-x, -y);
+    ctx.globalAlpha = 0.22 + Math.random() * 0.3;
     ctx.fillStyle = rg;
     ctx.beginPath();
-    ctx.arc(x, y, rx, 0, Math.PI * 2);
+    ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
-    ctx.restore();
   }
-  softLight(W * 0.30, H * 0.28, 150, 90, '#ffffff', 0.95); // 주 키라이트
-  softLight(W * 0.72, H * 0.35, 110, 70, '#ffe6c0', 0.7);  // 따뜻한 보조광
-  softLight(W * 0.55, H * 0.80, 130, 60, '#c77bff', 0.55); // 하단 보라 바운스
-  softLight(W * 0.88, H * 0.68, 90, 55, '#ff7ac2', 0.4);   // 핑크 림
+
+  // 금박 + 오팔(청록/핑크) 반점
+  var flake = ['#f59e0b', '#fcd34d', '#22d3ee', '#f472b6'];
+  for (var j = 0; j < 140; j++) {
+    var fx = Math.random() * S, fy = Math.random() * S;
+    var fr = 1.5 + Math.random() * 4.5;
+    ctx.globalAlpha = 0.5 + Math.random() * 0.5;
+    ctx.fillStyle = flake[(Math.random() * flake.length) | 0];
+    ctx.beginPath();
+    ctx.arc(fx, fy, fr, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
 
   var tex = new THREE.CanvasTexture(c);
-  tex.mapping = THREE.EquirectangularReflectionMapping;
   tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
 
-  var pmrem = new THREE.PMREMGenerator(renderer);
-  var envRT = pmrem.fromEquirectangular(tex);
-  tex.dispose();
-  pmrem.dispose();
-  return envRT.texture;
+// ── 글리터 스프라이트 (부드러운 원형 점) ────────────────────
+function makeGlitterSprite() {
+  var S = 64;
+  var c = document.createElement('canvas');
+  c.width = c.height = S;
+  var ctx = c.getContext('2d');
+  var rg = ctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+  rg.addColorStop(0, 'rgba(255,255,255,1)');
+  rg.addColorStop(0.4, 'rgba(255,255,255,0.6)');
+  rg.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = rg;
+  ctx.fillRect(0, 0, S, S);
+  var tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
 }
 
 // ── 정이십면체 면 데이터 (중심·법선) + 숫자 1~20 배정 ───────
-// 반환: faces[i] = { normal: Vector3(단위), center: Vector3, number: i+1 }
 function computeFaces(geometry) {
   var pos = geometry.attributes.position;
   var faceCount = pos.count / 3; // PolyhedronGeometry 는 non-indexed
@@ -127,32 +147,33 @@ function computeFaces(geometry) {
     var center = new THREE.Vector3().addVectors(a, b).add(c).divideScalar(3);
     faces.push({
       center: center,
-      normal: center.clone().normalize(), // 이십면체는 면 법선이 방사 방향과 일치
+      normal: center.clone().normalize(),
       number: f + 1
     });
   }
   return faces;
 }
 
-// 숫자 평면을 해당 면에 얹고, 텍스트가 대략 위를 향하도록 정렬
+// 숫자 평면을 면 바깥쪽에 얹는다. 평면 앞면(+Z)이 면 법선(바깥) 방향을 향하므로
+// 바깥에서 보는 카메라 기준으로 좌우반전 없이 정방향으로 읽힌다.
 function makeNumberPlane(face) {
-  var size = DIE_RADIUS * 0.62;
+  var size = DIE_RADIUS * 0.6;
   var geo = new THREE.PlaneGeometry(size, size);
   var mat = new THREE.MeshBasicMaterial({
     map: makeNumberTexture(face.number),
     transparent: true,
     depthWrite: false,
+    side: THREE.FrontSide, // 앞면만 → 뒤쪽(반전) 숫자는 컬링되어 안 보임
     toneMapped: false
   });
   var plane = new THREE.Mesh(geo, mat);
-  plane.renderOrder = 2;
+  plane.renderOrder = 3;
 
   var n = face.normal;
-  // 평면 기본 법선(+Z)을 면 법선으로 회전
   var q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n);
   plane.quaternion.copy(q);
 
-  // 글자 위쪽을 월드 up 투영 방향에 맞춤 (읽기 좋게)
+  // 글자 위쪽을 월드 up 투영 방향에 맞춤 (순수 회전, 반전 없음)
   var worldUp = new THREE.Vector3(0, 1, 0);
   var projUp = worldUp.clone().sub(n.clone().multiplyScalar(worldUp.dot(n)));
   if (projUp.lengthSq() > 1e-4) {
@@ -165,132 +186,173 @@ function makeNumberPlane(face) {
     plane.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(n, ang));
   }
 
-  plane.position.copy(face.center).multiplyScalar(1.015);
+  plane.position.copy(face.center).multiplyScalar(1.02);
   return plane;
 }
 
 // ── 주사위 스테이지 생성 ────────────────────────────────────
-// canvas 하나에 렌더러/씬/주사위를 구성하고 컨트롤러를 반환한다.
 function createStage(canvas) {
   var renderer = new THREE.WebGLRenderer({
     canvas: canvas,
     antialias: true,
     alpha: true,
-    premultipliedAlpha: false
+    premultipliedAlpha: false,
+    powerPreference: 'high-performance'
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); // 상한 2 (§3.3)
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); // 상한 2
   renderer.setClearAlpha(0);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.15;
+  renderer.toneMappingExposure = 1.1;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   var scene = new THREE.Scene();
-  scene.environment = buildEnvironment(renderer);
+
+  // 환경맵: RoomEnvironment(절차적) → PMREM. 유리/레진 반사의 핵심.
+  var pmrem = new THREE.PMREMGenerator(renderer);
+  var roomScene = new RoomEnvironment();
+  scene.environment = pmrem.fromScene(roomScene, 0.04).texture;
+  pmrem.dispose();
 
   var camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
   camera.position.set(0, 0, 3.7);
 
-  // 조명: 주광 + 보라/핑크 림라이트 (내부가 빛나는 느낌, §3.3)
-  scene.add(new THREE.AmbientLight(0xffffff, 0.45));
-  var key = new THREE.DirectionalLight(0xffffff, 2.4);
-  key.position.set(4, 5, 6);
+  // 조명 (§7): 약한 웜 키 + 뒤쪽 핑크/바이올렛 림
+  scene.add(new THREE.AmbientLight(0xffffff, 0.28));
+  var key = new THREE.DirectionalLight(0xfff2e0, 1.15);
+  key.position.set(3, 4, 5);
   scene.add(key);
-  var rimPurple = new THREE.DirectionalLight(0x8b5cf6, 1.8);
-  rimPurple.position.set(-5, 1, -4);
-  scene.add(rimPurple);
-  var rimPink = new THREE.DirectionalLight(0xff7ac2, 1.3);
-  rimPink.position.set(3, -4, -3);
+  var rimPink = new THREE.PointLight(0xf472b6, 60, 0, 2);
+  rimPink.position.set(-4, 1.5, -3.5);
   scene.add(rimPink);
-
-  // 주사위 지오메트리·재질
-  var geometry = new THREE.IcosahedronGeometry(DIE_RADIUS, 0);
-
-  // 면 데이터는 position 기준이므로 법선 재계산 전에 뽑아둔다
-  var faces = computeFaces(geometry);
-
-  // ★ 각진 d20 룩의 핵심: 면 단위 평평한 법선(flat shading).
-  // IcosahedronGeometry 기본 법선은 구처럼 매끈해 둥글게 보이므로,
-  // non-indexed 지오메트리에 삼각형별 법선을 재계산해 또렷한 면을 만든다.
-  geometry.computeVertexNormals();
-
-  // 면마다 아주 미묘한 농담 차이(레진 마블링): 정점 색으로 살짝 흔든다
-  var vcount = geometry.attributes.position.count;
-  var colors = new Float32Array(vcount * 3);
-  var base = new THREE.Color(AMETHYST);
-  for (var fi = 0; fi < vcount / 3; fi++) {
-    var jitter = 0.9 + ((fi * 2654435761) % 1000) / 1000 * 0.22; // 0.90~1.12
-    var col = base.clone().multiplyScalar(jitter);
-    for (var v = 0; v < 3; v++) {
-      colors[(fi * 3 + v) * 3 + 0] = col.r;
-      colors[(fi * 3 + v) * 3 + 1] = col.g;
-      colors[(fi * 3 + v) * 3 + 2] = col.b;
-    }
-  }
-  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-  // 반투명 자수정 레진: 높은 투과 + 보라 감쇠 + 클리어코트 광택
-  var material = new THREE.MeshPhysicalMaterial({
-    vertexColors: true,
-    metalness: 0.0,
-    roughness: 0.07,
-    transmission: 0.82,
-    thickness: 1.6,
-    ior: 1.55,
-    clearcoat: 1.0,
-    clearcoatRoughness: 0.07,
-    specularIntensity: 1.0,
-    iridescence: 0.14,
-    iridescenceIOR: 1.3,
-    emissive: new THREE.Color(0x2a0d44),
-    emissiveIntensity: 0.35,
-    attenuationColor: new THREE.Color(0x8a35d0),
-    attenuationDistance: 0.9,
-    envMapIntensity: 1.6,
-    transparent: true
-  });
+  var rimViolet = new THREE.PointLight(0x8b5cf6, 60, 0, 2);
+  rimViolet.position.set(4, -1.5, -3.5);
+  scene.add(rimViolet);
 
   var die = new THREE.Group();
-  var body = new THREE.Mesh(geometry, material);
-  die.add(body);
 
+  // (1) 외피 — 투명 레진 셸
+  var shellGeom = new THREE.IcosahedronGeometry(DIE_RADIUS, 0);
+  var faces = computeFaces(shellGeom); // position 기준, 법선 재계산 전에
+  shellGeom.computeVertexNormals();    // 면별 평면 법선 → 각진 면·모서리 하이라이트
+  var shellMat = new THREE.MeshPhysicalMaterial({
+    color: 0x8b5cf6,
+    transmission: 0.92,
+    thickness: 1.2,
+    ior: 1.5,
+    roughness: 0.08,
+    metalness: 0.0,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.06,
+    attenuationColor: new THREE.Color(0x6d28d9),
+    attenuationDistance: 1.5,
+    specularIntensity: 1.0,
+    iridescence: 0.12,
+    iridescenceIOR: 1.3,
+    transparent: true,
+    side: THREE.FrontSide
+  });
+  var shell = new THREE.Mesh(shellGeom, shellMat);
+  shell.renderOrder = 2;
+  die.add(shell);
+
+  // (2) 내부 인클루전 — 마블·금박이 비쳐 보이는 불투명 코어
+  var marbleTex = makeMarbleTexture();
+  var innerGeom = new THREE.IcosahedronGeometry(DIE_RADIUS * 0.85, 2);
+  var innerMat = new THREE.MeshStandardMaterial({
+    map: marbleTex,
+    emissive: new THREE.Color(0x5a1e8a),
+    emissiveMap: marbleTex,
+    emissiveIntensity: 0.45,
+    roughness: 0.4,
+    metalness: 0.0
+  });
+  var inner = new THREE.Mesh(innerGeom, innerMat);
+  inner.renderOrder = 1; // 외피보다 먼저 (투과 대상)
+  die.add(inner);
+
+  // (3) 글리터 — 내부 반경에 흩뿌린 반짝이. 2세트로 위상 어긋난 트윙클.
+  var glitterTex = makeGlitterSprite();
+  var small = Math.min(window.innerWidth, window.innerHeight) < 480;
+  var glitters = [];
+  var glitColors = [
+    new THREE.Color(0xf59e0b), new THREE.Color(0xf472b6), new THREE.Color(0x22d3ee)
+  ];
+  function buildGlitterSet(count, phase, speed, size) {
+    var g = new THREE.BufferGeometry();
+    var pos = new Float32Array(count * 3);
+    var col = new Float32Array(count * 3);
+    for (var i = 0; i < count; i++) {
+      // 내부 반경 안 랜덤 (표면 근처에 더 몰리게)
+      var u = Math.random();
+      var rad = DIE_RADIUS * (0.35 + 0.5 * Math.cbrt(u));
+      var th = Math.random() * Math.PI * 2;
+      var ph = Math.acos(2 * Math.random() - 1);
+      pos[i * 3] = rad * Math.sin(ph) * Math.cos(th);
+      pos[i * 3 + 1] = rad * Math.sin(ph) * Math.sin(th);
+      pos[i * 3 + 2] = rad * Math.cos(ph);
+      var cc = glitColors[(Math.random() * glitColors.length) | 0];
+      col[i * 3] = cc.r; col[i * 3 + 1] = cc.g; col[i * 3 + 2] = cc.b;
+    }
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    var m = new THREE.PointsMaterial({
+      map: glitterTex,
+      size: size,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.9,
+      depthTest: false, // 레진 안쪽에서도 반짝이가 보이도록
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    var pts = new THREE.Points(g, m);
+    pts.renderOrder = 4;
+    pts.userData = { phase: phase, speed: speed };
+    die.add(pts);
+    glitters.push(pts);
+  }
+  var perSet = small ? 90 : 150;
+  buildGlitterSet(perSet, 0.0, 2.2, 0.06);
+  buildGlitterSet(perSet, Math.PI, 3.1, 0.045);
+
+  // (4) 숫자
   for (var i = 0; i < faces.length; i++) {
     die.add(makeNumberPlane(faces[i]));
   }
+
   scene.add(die);
 
-  // ── 렌더 루프 ──
-  // 내추럴 1 연출용 붉은 플래시 라이트 (평소 꺼둠)
+  // 내추럴 1/20 연출용 플래시 라이트
   var flashLight = new THREE.PointLight(0xff2b3b, 0, 14);
   flashLight.position.set(0, 0, 3.2);
   scene.add(flashLight);
 
-  // ── 굴림 애니메이션 상태 (§3.3) ─────────────────────────────
-  var ROLL_MS = 1750;    // 총 텀블링 시간 (1.5~2초)
-  var SETTLE_MS = 240;   // 정지 순간 settle 모션
+  // ── 굴림 애니메이션 상태 (동일 로직) ────────────────────────
+  var ROLL_MS = 1750;
+  var SETTLE_MS = 240;
   var mode = 'idle';     // idle | roll | settle | done
   var startT = 0;
   var finalQ = null;
   var onDone = null;
-  var natType = 0;       // 20 | 1 | 0
+  var natType = 0;
   var forceFinish = false;
-  var baseEmissive = material.emissiveIntensity;
+  var baseEmissive = shellMat.emissiveIntensity || 0; // 셸엔 emissive 없음 → 0
+  var baseInnerEmissive = innerMat.emissiveIntensity;
 
-  // 텀블링 축 2개 (둘 다 각도가 0으로 수렴 → 정확히 finalQ에 착지)
   var axis1 = new THREE.Vector3(0.5, 1, 0.35).normalize();
   var axis2 = new THREE.Vector3(1, 0.2, -0.6).normalize();
-  var totalA1 = Math.PI * 2 * 5; // 5회전
-  var totalA2 = Math.PI * 2 * 3; // 3회전
+  var totalA1 = Math.PI * 2 * 5;
+  var totalA2 = Math.PI * 2 * 3;
   var tmpQ1 = new THREE.Quaternion();
   var tmpQ2 = new THREE.Quaternion();
   var camDir = new THREE.Vector3(0, 0, 1);
 
-  var natParticles = null; // 내추럴 20 골드 파티클
+  var natParticles = null;
 
   function easeOutQuart(x) { return 1 - Math.pow(1 - x, 4); }
 
-  // 결과 숫자 면이 카메라(+Z)를 향하도록 하는 최종 쿼터니언
   function computeFinalQ(number) {
-    var face = faces[number - 1]; // number = index+1
+    var face = faces[number - 1];
     return new THREE.Quaternion().setFromUnitVectors(face.normal, camDir);
   }
 
@@ -300,7 +362,6 @@ function createStage(canvas) {
     var positions = new Float32Array(N * 3);
     var vel = new Float32Array(N * 3);
     for (var i = 0; i < N; i++) {
-      // 구면 방향 무작위 + 속도
       var theta = Math.random() * Math.PI * 2;
       var phi = Math.acos(2 * Math.random() - 1);
       var sp = 1.8 + Math.random() * 2.2;
@@ -310,14 +371,17 @@ function createStage(canvas) {
     }
     g.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     var m = new THREE.PointsMaterial({
+      map: glitterTex,
       color: 0xffd27a,
-      size: 0.08,
+      size: 0.1,
       transparent: true,
       opacity: 1,
+      depthTest: false,
       depthWrite: false,
       blending: THREE.AdditiveBlending
     });
     natParticles = new THREE.Points(g, m);
+    natParticles.renderOrder = 5;
     natParticles.userData = { vel: vel, age: 0 };
     scene.add(natParticles);
   }
@@ -332,7 +396,6 @@ function createStage(canvas) {
 
   function triggerNat() {
     if (natType === 20) spawnGoldBurst();
-    // 내추럴 1은 settle 단계에서 flashLight 로 붉은 플래시
   }
 
   function updateParticles(dt) {
@@ -349,6 +412,7 @@ function createStage(canvas) {
   var running = true;
   var idle = true;
   var lastT = 0;
+  var clock = 0;
 
   function resize() {
     var w = canvas.clientWidth || 1;
@@ -362,6 +426,7 @@ function createStage(canvas) {
     if (!running) return;
     var dt = lastT ? (t - lastT) / 1000 : 0;
     lastT = t;
+    clock += dt;
 
     if (mode === 'idle') {
       die.rotation.y += dt * 0.6;
@@ -369,8 +434,8 @@ function createStage(canvas) {
     } else if (mode === 'roll') {
       if (!startT) startT = t;
       var p = Math.min((t - startT) / ROLL_MS, 1);
-      if (forceFinish) p = 1; // 탭 스킵
-      var k = 1 - easeOutQuart(p); // 감속하며 0으로
+      if (forceFinish) p = 1;
+      var k = 1 - easeOutQuart(p);
       tmpQ1.setFromAxisAngle(axis1, totalA1 * k);
       tmpQ2.setFromAxisAngle(axis2, totalA2 * k);
       die.quaternion.copy(finalQ).multiply(tmpQ1).multiply(tmpQ2);
@@ -382,27 +447,33 @@ function createStage(canvas) {
       }
     } else if (mode === 'settle') {
       var sp = Math.min((t - startT) / SETTLE_MS, 1);
-      var wave = Math.sin(sp * Math.PI); // 0→1→0
+      var wave = Math.sin(sp * Math.PI);
       die.quaternion.copy(finalQ);
-      die.scale.setScalar(1 + 0.06 * wave); // 살짝 튕김
+      die.scale.setScalar(1 + 0.06 * wave);
       if (natType === 20) {
-        material.emissiveIntensity = baseEmissive + 2.4 * wave; // 골드 글로우 펄스
+        innerMat.emissiveIntensity = baseInnerEmissive + 2.2 * wave;
         flashLight.color.setHex(0xffd27a);
         flashLight.intensity = 6 * wave;
       } else if (natType === 1) {
-        material.emissiveIntensity = baseEmissive * (1 - 0.7 * wave); // 어두워짐
+        innerMat.emissiveIntensity = baseInnerEmissive * (1 - 0.7 * wave);
         flashLight.color.setHex(0xff2b3b);
-        flashLight.intensity = 9 * wave; // 붉은 플래시
+        flashLight.intensity = 9 * wave;
       } else {
-        material.emissiveIntensity = baseEmissive + 0.8 * wave; // 일반 글로우
+        innerMat.emissiveIntensity = baseInnerEmissive + 0.6 * wave;
       }
       if (sp >= 1) {
         die.scale.setScalar(1);
-        material.emissiveIntensity = baseEmissive;
+        innerMat.emissiveIntensity = baseInnerEmissive;
         flashLight.intensity = 0;
         mode = 'done';
         if (onDone) { var d = onDone; onDone = null; d(); }
       }
+    }
+
+    // 글리터 트윙클 (모드 무관 상시)
+    for (var gi = 0; gi < glitters.length; gi++) {
+      var ud = glitters[gi].userData;
+      glitters[gi].material.opacity = 0.55 + 0.45 * Math.sin(clock * ud.speed + ud.phase);
     }
 
     updateParticles(dt);
@@ -417,7 +488,6 @@ function createStage(canvas) {
 
   return {
     faces: faces,
-    // 결과 숫자로 굴림 시작. done() 콜백은 정지·연출 완료 후 호출.
     rollTo: function (number, opts) {
       opts = opts || {};
       finalQ = computeFinalQ(number);
@@ -429,7 +499,6 @@ function createStage(canvas) {
       disposeParticles();
       mode = 'roll';
     },
-    // 탭 스킵: 진행 중이면 즉시 최종 자세로 스냅
     skip: function () {
       if (mode === 'roll') forceFinish = true;
     },
@@ -445,8 +514,14 @@ function createStage(canvas) {
         if (obj.material) {
           var m = obj.material;
           if (m.map) m.map.dispose();
+          if (m.emissiveMap && m.emissiveMap !== m.map) m.emissiveMap.dispose();
           m.dispose();
         }
+      });
+      // RoomEnvironment 리소스 정리
+      roomScene.traverse(function (obj) {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) obj.material.dispose();
       });
       if (scene.environment) scene.environment.dispose();
       renderer.dispose();
@@ -461,7 +536,6 @@ NS.dice3d = {
     try {
       return createStage(canvas);
     } catch (e) {
-      /* WebGL 컨텍스트 생성 실패 등 → fallback */
       if (window.console) console.warn('[dice3d] init failed:', e);
       return null;
     }
