@@ -75,86 +75,6 @@ function makeNumberTexture(n) {
   return tex;
 }
 
-// ── 내부 인클루전용 갤럭시 마블 텍스처 (성운 결 + 별/금박 반점) ──
-function makeMarbleTexture() {
-  var S = 1024;
-  var c = document.createElement('canvas');
-  c.width = c.height = S;
-  var ctx = c.getContext('2d');
-
-  // 베이스: 짙은 자수정 그라디언트
-  var base = ctx.createLinearGradient(0, 0, S, S);
-  base.addColorStop(0, '#2b1050');
-  base.addColorStop(0.5, '#180a30');
-  base.addColorStop(1, '#331454');
-  ctx.fillStyle = base;
-  ctx.fillRect(0, 0, S, S);
-
-  // 흐르는 성운 결(vein): 부드러운 곡선 스트로크를 색색으로 겹쳐 마블링
-  var veinCols = ['#7b2fbe', '#c026d3', '#a855f7', '#ede9fe', '#6d28d9'];
-  ctx.lineCap = 'round';
-  for (var s = 0; s < 26; s++) {
-    var x0 = Math.random() * S, y0 = Math.random() * S;
-    var a = Math.random() * Math.PI * 2;
-    var len = S * (0.4 + Math.random() * 0.6);
-    var steps = 6, px = x0, py = y0;
-    ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    for (var k = 0; k < steps; k++) {
-      a += (Math.random() - 0.5) * 1.3;
-      var seg = len / steps;
-      var nx = px + Math.cos(a) * seg;
-      var ny = py + Math.sin(a) * seg;
-      var mx = (px + nx) / 2 + (Math.random() - 0.5) * 40;
-      var my = (py + ny) / 2 + (Math.random() - 0.5) * 40;
-      ctx.quadraticCurveTo(mx, my, nx, ny);
-      px = nx; py = ny;
-    }
-    ctx.strokeStyle = veinCols[(Math.random() * veinCols.length) | 0];
-    ctx.globalAlpha = 0.10 + Math.random() * 0.22;
-    ctx.shadowColor = ctx.strokeStyle;
-    ctx.shadowBlur = 26 + Math.random() * 40;
-    ctx.lineWidth = 6 + Math.random() * 26;
-    ctx.stroke();
-  }
-  ctx.shadowBlur = 0;
-
-  // 희끗한 성운 응어리 (오팔/은하 하이라이트)
-  var cloud = ['#ede9fe', '#f5d0fe', '#ffffff'];
-  for (var i = 0; i < 14; i++) {
-    var cxp = Math.random() * S, cyp = Math.random() * S;
-    var r = 60 + Math.random() * 160;
-    var rg = ctx.createRadialGradient(cxp, cyp, 0, cxp, cyp, r);
-    rg.addColorStop(0, cloud[(Math.random() * cloud.length) | 0]);
-    rg.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.globalAlpha = 0.08 + Math.random() * 0.16;
-    ctx.fillStyle = rg;
-    ctx.beginPath();
-    ctx.arc(cxp, cyp, r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // 별/금박 반점 (금·오팔·핑크). 큰 것은 살짝 발광
-  var flake = ['#f59e0b', '#fcd34d', '#8fd8ff', '#f472b6', '#fde68a', '#ffffff'];
-  for (var j = 0; j < 300; j++) {
-    var fx = Math.random() * S, fy = Math.random() * S;
-    var fr = 1.2 + Math.random() * 6.5;
-    ctx.globalAlpha = 0.5 + Math.random() * 0.5;
-    ctx.fillStyle = flake[(Math.random() * flake.length) | 0];
-    if (fr > 4.5) { ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 10; }
-    ctx.beginPath();
-    ctx.arc(fx, fy, fr, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-  }
-  ctx.globalAlpha = 1;
-
-  var tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 4;
-  return tex;
-}
-
 // ── 글리터 스프라이트 (부드러운 원형 점) ────────────────────
 function makeGlitterSprite() {
   var S = 64;
@@ -268,27 +188,47 @@ function createStage(canvas) {
 
   var die = new THREE.Group();
 
-  // (1) 외피 — 반투명 자수정 레진 셸 (갤럭시가 비쳐 보이도록 투과 높임)
+  // (1) 반투명 보라 레진 셸 — 위는 맑고 아래로 갈수록 진해지는 세로 그라데이션(참고 이미지)
   var shellGeom = new THREE.IcosahedronGeometry(DIE_RADIUS, 0);
   var faces = computeFaces(shellGeom); // position 기준, 법선 재계산 전에
   shellGeom.computeVertexNormals();    // 면별 평면 법선 → 각진 면·모서리 하이라이트
+
+  // 세로 그라데이션 정점색: 위쪽 맑은 라벤더 → 아래쪽 진한 보라
+  (function applyVerticalGradient(geom, topHex, botHex) {
+    var pos = geom.attributes.position;
+    var top = new THREE.Color(topHex), bot = new THREE.Color(botHex), tmp = new THREE.Color();
+    var minY = Infinity, maxY = -Infinity, i;
+    for (i = 0; i < pos.count; i++) {
+      var y = pos.getY(i);
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+    var span = (maxY - minY) || 1;
+    var colors = new Float32Array(pos.count * 3);
+    for (i = 0; i < pos.count; i++) {
+      tmp.copy(bot).lerp(top, (pos.getY(i) - minY) / span);
+      colors[i * 3] = tmp.r; colors[i * 3 + 1] = tmp.g; colors[i * 3 + 2] = tmp.b;
+    }
+    geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  })(shellGeom, 0xdccbf3, 0x3a1066);
+
   var shellMat = new THREE.MeshPhysicalMaterial({
-    color: 0x9b46d6, // 자수정 보라
+    vertexColors: true,
     transmission: 0.9,
-    thickness: 1.5,
+    thickness: 1.3,
     ior: 1.52,
-    roughness: 0.07,
+    roughness: 0.05,
     metalness: 0.0,
     clearcoat: 1.0,
-    clearcoatRoughness: 0.06,
-    attenuationColor: new THREE.Color(0x6d28b0),
-    attenuationDistance: 1.4,
+    clearcoatRoughness: 0.05,
+    attenuationColor: new THREE.Color(0x7a2fb0),
+    attenuationDistance: 1.8,
     specularIntensity: 1.0,
-    sheen: 0.5,
+    sheen: 0.4,
     sheenRoughness: 0.4,
     sheenColor: new THREE.Color(0xc79bff),
-    iridescence: 0.16,
-    iridescenceIOR: 1.32,
+    emissive: new THREE.Color(0x1a0733),
+    emissiveIntensity: 0.12,
     envMapIntensity: 1.7,
     transparent: true,
     side: THREE.FrontSide
@@ -297,66 +237,10 @@ function createStage(canvas) {
   shell.renderOrder = 2;
   die.add(shell);
 
-  // (2) 내부 인클루전 — 갤럭시 성운(마블·금박)이 레진 속에 비쳐 보이는 코어
-  var marbleTex = makeMarbleTexture();
-  var innerGeom = new THREE.IcosahedronGeometry(DIE_RADIUS * 0.85, 2);
-  var innerMat = new THREE.MeshStandardMaterial({
-    map: marbleTex,
-    emissive: new THREE.Color(0x5a1e8a),
-    emissiveMap: marbleTex,
-    emissiveIntensity: 0.45,
-    roughness: 0.4,
-    metalness: 0.0
-  });
-  var inner = new THREE.Mesh(innerGeom, innerMat);
-  inner.renderOrder = 1; // 외피보다 먼저 (투과 대상)
-  die.add(inner);
-
-  // (3) 글리터 — 레진 속 반짝이 별. 2세트로 위상 어긋난 트윙클.
+  // 내추럴 20 골드 파티클용 스프라이트
   var glitterTex = makeGlitterSprite();
-  var smallScreen = Math.min(window.innerWidth, window.innerHeight) < 480;
-  var glitters = [];
-  var glitColors = [
-    new THREE.Color(0xffd27a), new THREE.Color(0xf472b6), new THREE.Color(0x8fd8ff)
-  ];
-  function buildGlitterSet(count, phase, speed, size) {
-    var g = new THREE.BufferGeometry();
-    var pos = new Float32Array(count * 3);
-    var col = new Float32Array(count * 3);
-    for (var gi = 0; gi < count; gi++) {
-      var u = Math.random();
-      var rad = DIE_RADIUS * (0.35 + 0.5 * Math.cbrt(u));
-      var th = Math.random() * Math.PI * 2;
-      var ph = Math.acos(2 * Math.random() - 1);
-      pos[gi * 3] = rad * Math.sin(ph) * Math.cos(th);
-      pos[gi * 3 + 1] = rad * Math.sin(ph) * Math.sin(th);
-      pos[gi * 3 + 2] = rad * Math.cos(ph);
-      var cc = glitColors[(Math.random() * glitColors.length) | 0];
-      col[gi * 3] = cc.r; col[gi * 3 + 1] = cc.g; col[gi * 3 + 2] = cc.b;
-    }
-    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-    var m = new THREE.PointsMaterial({
-      map: glitterTex,
-      size: size,
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.9,
-      depthTest: false, // 레진 안쪽에서도 반짝이가 보이도록
-      depthWrite: false,
-      blending: THREE.AdditiveBlending
-    });
-    var pts = new THREE.Points(g, m);
-    pts.renderOrder = 4;
-    pts.userData = { phase: phase, speed: speed };
-    die.add(pts);
-    glitters.push(pts);
-  }
-  var perSet = smallScreen ? 90 : 150;
-  buildGlitterSet(perSet, 0.0, 2.2, 0.06);
-  buildGlitterSet(perSet, Math.PI, 3.1, 0.045);
 
-  // (4) 숫자
+  // (2) 숫자
   for (var i = 0; i < faces.length; i++) {
     die.add(makeNumberPlane(faces[i]));
   }
@@ -377,7 +261,7 @@ function createStage(canvas) {
   var onDone = null;
   var natType = 0;
   var forceFinish = false;
-  var baseInnerEmissive = innerMat.emissiveIntensity;
+  var baseInnerEmissive = shellMat.emissiveIntensity; // 내추럴 연출용 기준 발광
 
   var axis1 = new THREE.Vector3(0.5, 1, 0.35).normalize();
   var axis2 = new THREE.Vector3(1, 0.2, -0.6).normalize();
@@ -452,7 +336,6 @@ function createStage(canvas) {
   var running = true;
   var idle = true;
   var lastT = 0;
-  var clock = 0;
 
   function resize() {
     var w = canvas.clientWidth || 1;
@@ -466,7 +349,6 @@ function createStage(canvas) {
     if (!running) return;
     var dt = lastT ? (t - lastT) / 1000 : 0;
     lastT = t;
-    clock += dt;
 
     if (mode === 'idle') {
       die.rotation.y += dt * 0.6;
@@ -491,29 +373,23 @@ function createStage(canvas) {
       die.quaternion.copy(finalQ);
       die.scale.setScalar(1 + 0.06 * wave);
       if (natType === 20) {
-        innerMat.emissiveIntensity = baseInnerEmissive + 2.2 * wave;
+        shellMat.emissiveIntensity = baseInnerEmissive + 2.2 * wave;
         flashLight.color.setHex(0xffd27a);
         flashLight.intensity = 6 * wave;
       } else if (natType === 1) {
-        innerMat.emissiveIntensity = baseInnerEmissive * (1 - 0.7 * wave);
+        shellMat.emissiveIntensity = baseInnerEmissive * (1 - 0.7 * wave);
         flashLight.color.setHex(0xff2b3b);
         flashLight.intensity = 9 * wave;
       } else {
-        innerMat.emissiveIntensity = baseInnerEmissive + 0.6 * wave;
+        shellMat.emissiveIntensity = baseInnerEmissive + 0.6 * wave;
       }
       if (sp >= 1) {
         die.scale.setScalar(1);
-        innerMat.emissiveIntensity = baseInnerEmissive;
+        shellMat.emissiveIntensity = baseInnerEmissive;
         flashLight.intensity = 0;
         mode = 'done';
         if (onDone) { var d = onDone; onDone = null; d(); }
       }
-    }
-
-    // 글리터 트윙클 (모드 무관 상시)
-    for (var gi = 0; gi < glitters.length; gi++) {
-      var gud = glitters[gi].userData;
-      glitters[gi].material.opacity = 0.55 + 0.45 * Math.sin(clock * gud.speed + gud.phase);
     }
 
     updateParticles(dt);
