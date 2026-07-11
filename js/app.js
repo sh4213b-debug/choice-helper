@@ -33,8 +33,38 @@
     tieBanner: document.getElementById('tie-banner'),
     resultList: document.getElementById('result-list'),
     rerollBtn: document.getElementById('reroll-btn'),
-    resultHome: document.getElementById('result-home')
+    resultHome: document.getElementById('result-home'),
+    diceStage: document.getElementById('dice-stage'),
+    diceCanvas: document.getElementById('dice-canvas'),
+    diceFallback: document.getElementById('dice-fallback')
   };
+
+  // ── 3D 주사위 스테이지 수명 관리 ────────────────────────────
+  // 결과 화면 진입 시 생성, 이탈 시 dispose (§3.3 성능).
+  var diceStage = null; // dice3d 컨트롤러 (WebGL 가능 시)
+
+  function mountDice() {
+    var dice3d = window.ChoiceHelper.dice3d;
+    if (diceStage) return;                       // 이미 마운트됨
+    if (dice3d && dice3d.supported()) {
+      diceStage = dice3d.create(el.diceCanvas);
+    }
+    if (diceStage) {
+      el.diceCanvas.classList.remove('is-hidden');
+      el.diceFallback.classList.add('is-hidden');
+    } else {
+      // WebGL 미지원/실패 → CSS fallback (연출 상세는 v0.2.3)
+      el.diceCanvas.classList.add('is-hidden');
+      el.diceFallback.classList.remove('is-hidden');
+    }
+  }
+
+  function unmountDice() {
+    if (diceStage) {
+      diceStage.dispose();
+      diceStage = null;
+    }
+  }
 
   // ── 화면 전환 ───────────────────────────────────────────────
   function show(name) {
@@ -94,6 +124,7 @@
     el.tieBanner.classList.toggle('is-hidden', !dice.hasTie(results));
 
     show('result');
+    mountDice(); // v0.2.2: 결과 화면에 3D 주사위 표시 (굴림 애니메이션은 v0.2.3)
   }
 
   function buildResultCard(label, result) {
@@ -150,6 +181,7 @@
 
   // 처음으로
   function goHome() {
+    unmountDice(); // 결과 화면 이탈 시 renderer dispose
     show('home');
   }
   el.labelsBack.addEventListener('click', goHome);

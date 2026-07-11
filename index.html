@@ -63,6 +63,15 @@
         <h2 class="screen-title">결과</h2>
       </header>
 
+      <!-- 3D 주사위 스테이지 (WebGL 미지원 시 CSS fallback 표시) -->
+      <div class="dice-stage" id="dice-stage">
+        <canvas class="dice-canvas" id="dice-canvas"></canvas>
+        <div class="dice-fallback is-hidden" id="dice-fallback" aria-hidden="true">
+          <div class="dice-fallback__cube"><span id="dice-fallback-num">20</span></div>
+        </div>
+        <p class="dice-hint is-hidden" id="dice-hint">화면을 탭하면 건너뛰기</p>
+      </div>
+
       <p class="tie-banner is-hidden" id="tie-banner">동점이에요! 다시 굴려볼까요?</p>
 
       <div class="result-list" id="result-list"><!-- 동적 생성 --></div>
@@ -74,8 +83,11 @@
     </section>
   </main>
 
-  <!-- 로직 먼저, 뷰 나중 (file:// 에서도 동작하도록 순서 로드) -->
+  <!-- 순수 로직 (DOM 비의존) -->
   <script src="js/dice.js"></script>
+  <!-- 3D 주사위 렌더러 (Three.js, ES 모듈 / 로컬 번들). 로드 실패 시 app.js가 CSS fallback으로 동작 -->
+  <script type="module" src="js/dice3d.js"></script>
+  <!-- 뷰/컨트롤러 -->
   <script src="js/app.js"></script>
 </body>
 </html>

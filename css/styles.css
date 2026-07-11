@@ -257,6 +257,59 @@ body {
   cursor: pointer;
 }
 
+/* ── 3D 주사위 스테이지 ── */
+.dice-stage {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  margin: 4px 0 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
+
+.dice-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.dice-hint {
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+/* CSS fallback (WebGL 미지원) — 연출 상세는 v0.2.3 */
+.dice-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dice-fallback__cube {
+  width: 96px;
+  height: 96px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  font-family: Georgia, serif;
+  font-size: 40px;
+  color: #f0b27a;
+  background: linear-gradient(145deg, rgba(123, 47, 190, 0.55), rgba(58, 24, 90, 0.75));
+  border: 1px solid rgba(167, 139, 250, 0.4);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 24px rgba(139, 92, 246, 0.35);
+}
+
 /* ── 결과 ── */
 .tie-banner {
   margin: 0 0 16px;
