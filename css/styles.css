@@ -1,11 +1,11 @@
 /* styles.css — Choice Helper
    콘셉트: "운명의 오라클" — 점술사/크리스털 오브 배경 + 금색·상아 포인트,
-   필기체 타이포. 주사위는 딥 자수정 레진. 모바일 우선. */
+   명조(세리프) 타이포. 주사위는 딥 자수정 레진. 모바일 우선. */
 
-/* 손글씨(필기체) 폰트 — 로컬 번들(한글 전체+라틴 서브셋), 외부 URL 없음 */
+/* 명조(세리프) 폰트 — 나눔명조(OFL, 웹 임베드·수정 허용). 로컬 번들, 외부 URL 없음 */
 @font-face {
-  font-family: 'Nanum Pen Script';
-  src: url('../fonts/nanum-pen-script.woff2') format('woff2');
+  font-family: 'Nanum Myeongjo';
+  src: url('../fonts/nanum-myeongjo.woff2') format('woff2');
   font-weight: 400; font-style: normal; font-display: swap;
 }
 
@@ -33,7 +33,7 @@
   --type-card-border: rgba(240, 195, 106, 0.25);
   --radius: 18px;
   --shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
-  --hand: 'Nanum Pen Script', "Apple SD Gothic Neo", "Noto Sans KR", cursive;
+  --serif: 'Nanum Myeongjo', "Apple SD Gothic Neo", "Noto Serif KR", serif;
 }
 
 * { box-sizing: border-box; }
@@ -48,7 +48,7 @@ html, body {
 }
 
 body {
-  font-family: var(--hand);
+  font-family: var(--serif);
   color: var(--text);
   background:
     radial-gradient(1200px 900px at 50% -10%, #241733, transparent 60%),
@@ -76,34 +76,35 @@ body {
   flex-direction: column;
 }
 
-/* ── 헤더 ── */
-/* 필기체는 획이 얇아 sans 대비 크게 잡는다 */
+/* ── 헤더 (명조 세리프) ── */
 .app-header { text-align: center; margin-bottom: 24px; }
 
 .app-title {
-  font-family: var(--hand);
-  font-size: 46px;
+  font-family: var(--serif);
+  font-size: 34px;
   font-weight: 400;
-  line-height: 1.05;
-  margin: 0 0 2px;
-  letter-spacing: 0.04em;
+  line-height: 1.1;
+  margin: 0 0 4px;
+  letter-spacing: 0.06em;
   color: var(--gold);
-  text-shadow: 0 0 18px rgba(240, 195, 106, 0.55), 0 2px 6px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 0 18px rgba(240, 195, 106, 0.5), 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
 .screen-title {
-  font-family: var(--hand);
-  font-size: 34px;
+  font-family: var(--serif);
+  font-size: 25px;
   font-weight: 400;
   margin: 0 0 2px;
+  letter-spacing: 0.04em;
   color: var(--gold);
-  text-shadow: 0 0 14px rgba(240, 195, 106, 0.4);
+  text-shadow: 0 0 14px rgba(240, 195, 106, 0.35);
 }
 
 .app-subtitle {
   margin: 0;
   color: var(--text-dim);
-  font-size: 21px;
+  font-size: 15px;
+  letter-spacing: 0.02em;
 }
 
 /* ── 선택 타입 카드 (가로 배치, §3.2) ── */
@@ -144,26 +145,26 @@ body {
 }
 .type-card:active { transform: translateY(-2px) scale(0.99); }
 
-/* 큰 표기 글리프(필기체, 금색). 구분자는 작고 연하게 */
+/* 큰 표기 글리프(명조 세리프, 금색). 구분자는 작고 연하게 */
 .type-card__glyph {
-  font-family: var(--hand);
+  font-family: var(--serif);
   font-weight: 400;
-  font-size: 44px;
+  font-size: 34px;
   line-height: 1;
-  letter-spacing: 0.02em;
-  margin-top: 6px;
+  letter-spacing: 0.03em;
+  margin-top: 8px;
   color: var(--gold);
 }
 .type-card__glyph em {
   font-style: normal;
-  font-size: 24px;
+  font-size: 16px;
   color: rgba(240, 195, 106, 0.45);
-  margin: 0 3px;
+  margin: 0 4px;
   vertical-align: middle;
 }
 
 .type-card__sub {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.22em;
   color: rgba(240, 195, 106, 0.7);
@@ -171,14 +172,14 @@ body {
 
 .type-card__ko {
   margin-top: auto;
-  font-size: 19px;
+  font-size: 15px;
   color: var(--ivory);
 }
 
 @media (max-width: 480px) {
   .type-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .type-card { min-height: 150px; padding: 20px 12px; }
-  .type-card__glyph { font-size: 38px; }
+  .type-card__glyph { font-size: 30px; }
 }
 
 /* ── 메인(오라클) 배경 + 가독성 오버레이 ── */
@@ -275,10 +276,10 @@ body {
   display: grid;
   place-items: center;
   border-radius: 12px;
-  font-weight: 800;
-  color: var(--pink-bright);
-  background: rgba(244, 114, 182, 0.12);
-  border: 1px solid rgba(244, 114, 182, 0.3);
+  font-size: 20px;
+  color: var(--gold);
+  background: rgba(240, 195, 106, 0.12);
+  border: 1px solid rgba(240, 195, 106, 0.3);
 }
 
 .label-input__field {
@@ -305,12 +306,12 @@ body {
 /* ── 공통 버튼 ── */
 .btn {
   width: 100%;
-  padding: 13px 18px;
+  padding: 14px 18px;
   border-radius: 14px;
-  font-family: var(--hand);
-  font-size: 24px;
+  font-family: var(--serif);
+  font-size: 17px;
   font-weight: 400;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
   cursor: pointer;
   border: 1px solid transparent;
   transition: transform 0.12s ease, filter 0.2s ease;
