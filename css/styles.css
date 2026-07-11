@@ -8,6 +8,12 @@
   src: url('../fonts/nanum-myeongjo.woff2') format('woff2');
   font-weight: 400; font-style: normal; font-display: swap;
 }
+/* 디스플레이 세리프 — 송명(OFL, 로컬 번들·서브셋). 고대비·천체 알마낙 톤 */
+@font-face {
+  font-family: 'Song Myung';
+  src: url('../fonts/song-myung.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
 
 :root {
   /* 오라클 팔레트 (배경 이미지에서 추출) */
@@ -34,6 +40,8 @@
   --radius: 18px;
   --shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
   --serif: 'Nanum Myeongjo', "Apple SD Gothic Neo", "Noto Serif KR", serif;
+  /* 디스플레이(제목·눈금 이름·구슬 글리프): 고대비 명조 송명 → 나눔명조 폴백 */
+  --display: 'Song Myung', 'Nanum Myeongjo', "Apple SD Gothic Neo", serif;
   /* 유틸리티(데이터·눈금·눈) 서체: 시스템 모노 — 주사위 표기/천체 좌표 느낌 (외부 로드 없음) */
   --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, "Cascadia Mono", "Roboto Mono", monospace;
 }
@@ -56,14 +64,29 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* 성운 배경 이미지 (참고 핀 → 로컬 번들). 화면 고정 풀블리드. */
+/* 움직이는 성운 배경 (영상). 화면 고정 풀블리드. */
+.bg-video {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 42%;
+  z-index: -10;
+  pointer-events: none;
+}
+/* 정지 이미지 폴백 (영상 로드 전/실패/모션 최소화). 영상 뒤에 깔림. */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
-  z-index: -10;
+  z-index: -11;
   pointer-events: none;
   background: #06060f url('../assets/bg-nebula.jpg') center 42% / cover no-repeat;
+}
+/* 모션 최소화 선호 시 영상 숨기고 정지 이미지 사용 */
+@media (prefers-reduced-motion: reduce) {
+  .bg-video { display: none; }
 }
 /* 가독성 비네트: 중앙(성운 핵)은 살리고 가장자리·하단은 어둡게 */
 body::after {
@@ -121,7 +144,7 @@ body::after {
 .app-header { text-align: center; margin-bottom: 24px; }
 
 .app-title {
-  font-family: var(--serif);
+  font-family: var(--display);
   font-size: 34px;
   font-weight: 400;
   line-height: 1.1;
@@ -132,7 +155,7 @@ body::after {
 }
 
 .screen-title {
-  font-family: var(--serif);
+  font-family: var(--display);
   font-size: 25px;
   font-weight: 400;
   margin: 0 0 2px;
@@ -226,7 +249,7 @@ body::after {
 .orb__glyph {
   position: relative;
   z-index: 2;
-  font-family: var(--serif);
+  font-family: var(--display);
   font-size: clamp(29px, 7.6vw, 39px);
   letter-spacing: 0.05em;
   color: #fff3df;
@@ -766,7 +789,7 @@ body::after {
 .eyebrow::before { content: "✦\00a0\00a0"; opacity: 0.85; }
 
 .info-title {
-  font-family: var(--serif);
+  font-family: var(--display);
   font-size: 23px;
   font-weight: 400;
   margin: 0 0 14px;
@@ -890,7 +913,7 @@ body::after {
   white-space: nowrap;
 }
 .fate-rung__name {
-  font-family: var(--serif);
+  font-family: var(--display);
   font-size: 16.5px;
   color: var(--ivory);
   letter-spacing: 0.01em;
@@ -995,7 +1018,7 @@ body::after {
 }
 .doc-back:hover { color: var(--gold); }
 .doc-title {
-  font-family: var(--serif);
+  font-family: var(--display);
   font-size: 28px;
   font-weight: 400;
   letter-spacing: 0.04em;
@@ -1009,7 +1032,7 @@ body::after {
   color: var(--text-faint);
 }
 .doc-h2 {
-  font-family: var(--serif);
+  font-family: var(--display);
   font-size: 18px;
   font-weight: 400;
   letter-spacing: 0.02em;

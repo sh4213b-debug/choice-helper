@@ -24,9 +24,16 @@
   </script>
   <!-- LCP 대비: 세리프 폰트 프리로드 (배경은 절차적 CSS라 이미지 없음) -->
   <link rel="preload" as="font" type="font/woff2" href="fonts/nanum-myeongjo.woff2" crossorigin>
+  <link rel="preload" as="font" type="font/woff2" href="fonts/song-myung.woff2" crossorigin>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+  <!-- 움직이는 성운 배경 (poster=정지 이미지, reduced-motion/실패 시 이미지로 폴백) -->
+  <video class="bg-video" id="bg-video" autoplay muted loop playsinline preload="auto"
+         poster="assets/bg-nebula.jpg" aria-hidden="true">
+    <source src="assets/bg-nebula.mp4" type="video/mp4">
+  </video>
+
   <main class="app" id="app">
     <!-- 우상단 KO/EN 토글 (§2.7) -->
     <button type="button" class="lang-toggle" id="lang-toggle" aria-label="Language">EN</button>
