@@ -97,7 +97,11 @@ README.md       실행·구조·배포 문서
 - **CSS 중괄호 균형**: `{`/`}` 개수 일치 확인.
 - **i18n**: HTML의 `data-i18n` 키가 전부 사전에 존재하는지, ko/en 키가 대응되는지 스크립트로 확인.
 - **로컬 서버**: `python3 -m http.server 8000` → `http://127.0.0.1:8000` (3D 주사위가 ES 모듈이라 `file://` 더블클릭 불가).
-- ⚠️ **한계**: 이 환경에는 브라우저/Playwright가 없어 **3D 주사위·배경의 실제 렌더 스크린샷 확인 불가**. 시각 관련 변경은 코드 검증 후 "육안 확인 못 함"을 보고에 명시하고, 사용자에게 로컬 확인을 요청한다.
+- **브라우저(스크린샷) 검증 가능**: 이 macOS 환경에 기본 브라우저는 없지만 **Playwright + Chromium 설치가 되고, WebGL은 SwiftShader로 렌더된다**. 스크래치패드에 설치 후 헤드리스로 스크린샷:
+  - 설치: 스크래치패드 `tools/`에서 `npm i playwright` → `npx playwright install chromium` (저장소 밖, 커밋 금지).
+  - 3D 주사위용 실행 플래그: `--use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader --ignore-gpu-blocklist`.
+  - 스크립트 예: `scratchpad/tools/shoot.js` (home/Fate Scale/결과 주사위 촬영). 헤드리스 기본 언어 감지는 `en`.
+  - 스크래치패드는 세션마다 사라지므로 매 세션 재설치. **시각 변경은 반드시 스크린샷으로 자기검증한 뒤 보고한다.**
 
 ---
 
