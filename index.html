@@ -42,6 +42,8 @@
           <span class="type-card__ko">다중선택 (A/B/C/D)</span>
         </button>
       </div>
+
+      <button type="button" class="link-subtle" id="open-history">지난 기록 보기</button>
     </section>
 
     <!-- 2. 라벨 입력 -->
@@ -84,13 +86,29 @@
 
       <div class="result-actions">
         <button type="button" class="btn btn--primary" id="reroll-btn">다시 굴리기</button>
+        <button type="button" class="btn btn--ghost" id="share-btn">결과 공유</button>
         <button type="button" class="btn btn--ghost" id="result-home">처음으로</button>
+      </div>
+    </section>
+
+    <!-- 4. 히스토리 -->
+    <section class="screen screen--history is-hidden" id="screen-history">
+      <header class="app-header">
+        <h2 class="screen-title">지난 기록</h2>
+        <p class="app-subtitle">최근 10개 · 이 기기에만 저장됩니다</p>
+      </header>
+      <div class="history-list" id="history-list"><!-- 동적 생성 --></div>
+      <p class="history-empty is-hidden" id="history-empty">아직 기록이 없어요.</p>
+      <div class="result-actions">
+        <button type="button" class="btn btn--ghost" id="history-back">처음으로</button>
       </div>
     </section>
   </main>
 
   <!-- 순수 로직 (DOM 비의존) -->
   <script src="js/dice.js"></script>
+  <script src="js/history.js"></script>
+  <script src="js/share.js"></script>
   <!-- 3D 주사위 렌더러 (Three.js, ES 모듈 / 로컬 번들). 로드 실패 시 app.js가 CSS fallback으로 동작 -->
   <script type="module" src="js/dice3d.js"></script>
   <!-- 뷰/컨트롤러 -->

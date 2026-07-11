@@ -21,7 +21,8 @@
   var screens = {
     home: document.getElementById('screen-home'),
     labels: document.getElementById('screen-labels'),
-    result: document.getElementById('screen-result')
+    result: document.getElementById('screen-result'),
+    history: document.getElementById('screen-history')
   };
   var el = {
     modeList: document.getElementById('mode-list'),
@@ -33,6 +34,7 @@
     tieBanner: document.getElementById('tie-banner'),
     resultList: document.getElementById('result-list'),
     rerollBtn: document.getElementById('reroll-btn'),
+    shareBtn: document.getElementById('share-btn'),
     resultHome: document.getElementById('result-home'),
     diceStage: document.getElementById('dice-stage'),
     diceCanvas: document.getElementById('dice-canvas'),
@@ -40,7 +42,11 @@
     diceFallbackNum: document.getElementById('dice-fallback-num'),
     diceCaption: document.getElementById('dice-caption'),
     diceHint: document.getElementById('dice-hint'),
-    resultActions: document.querySelector('.result-actions')
+    resultActions: document.querySelector('.result-actions'),
+    openHistory: document.getElementById('open-history'),
+    historyList: document.getElementById('history-list'),
+    historyEmpty: document.getElementById('history-empty'),
+    historyBack: document.getElementById('history-back')
   };
 
   // ── 3D 주사위 스테이지 수명 관리 ────────────────────────────
@@ -156,11 +162,36 @@
     next();
   }
 
+  var lastEntry = null; // 마지막 결과 (공유용)
+
+  function buildEntry(results, labels) {
+    var items = results.map(function (r, i) {
+      return {
+        label: labels[i],
+        grade: r.grade.grade,
+        ko: r.grade.ko,
+        en: r.grade.en,
+        roll: r.roll
+      };
+    });
+    return {
+      id: String(Date.now()) + '-' + Math.floor(Math.random() * 1e6),
+      ts: Date.now(),
+      count: results.length,
+      tie: dice.hasTie(results),
+      items: items
+    };
+  }
+
   function finishSequence(results) {
     el.diceHint.classList.add('is-hidden');
     el.diceCaption.textContent = '';
     el.tieBanner.classList.toggle('is-hidden', !dice.hasTie(results));
     setActionsVisible(true);
+
+    // 히스토리 저장 (§2.5) + 공유용으로 보관
+    lastEntry = buildEntry(results, state.labels);
+    window.ChoiceHelper.history.add(lastEntry);
   }
 
   // 3D 주사위 롤러 (dice3d 컨트롤러 래핑)
@@ -255,9 +286,78 @@
     renderResults();
   });
 
+  // 결과 공유 (§2.6) — 캔버스 카드 생성 → Web Share / 다운로드
+  el.shareBtn.addEventListener('click', function () {
+    if (!lastEntry) return;
+    window.ChoiceHelper.share.shareResult({ tie: lastEntry.tie, items: lastEntry.items });
+  });
+
   // 화면 탭으로 애니메이션 스킵 (§2.4)
   el.diceStage.addEventListener('click', function () {
     if (activeRoller) activeRoller.skip();
+  });
+
+  // ── 히스토리 (§2.5) ─────────────────────────────────────────
+  function timeAgo(ts) {
+    var sec = Math.max(0, (Date.now() - ts) / 1000);
+    if (sec < 60) return '방금 전';
+    var min = Math.floor(sec / 60);
+    if (min < 60) return min + '분 전';
+    var hr = Math.floor(min / 60);
+    if (hr < 24) return hr + '시간 전';
+    return Math.floor(hr / 24) + '일 전';
+  }
+
+  function renderHistory() {
+    var list = window.ChoiceHelper.history.load();
+    el.historyList.innerHTML = '';
+    el.historyEmpty.classList.toggle('is-hidden', list.length > 0);
+
+    list.forEach(function (entry) {
+      var row = document.createElement('div');
+      row.className = 'history-item';
+
+      var main = document.createElement('div');
+      main.className = 'history-item__main';
+
+      var summary = entry.items.map(function (it) {
+        return it.label + ' — ' + it.ko;
+      }).join(' · ');
+      var line = document.createElement('div');
+      line.className = 'history-item__summary';
+      line.textContent = summary + (entry.tie ? '  (동점!)' : '');
+
+      var time = document.createElement('div');
+      time.className = 'history-item__time';
+      time.textContent = timeAgo(entry.ts);
+
+      main.appendChild(line);
+      main.appendChild(time);
+
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'history-item__del';
+      del.setAttribute('aria-label', '삭제');
+      del.dataset.id = entry.id;
+      del.textContent = '×';
+
+      row.appendChild(main);
+      row.appendChild(del);
+      el.historyList.appendChild(row);
+    });
+  }
+
+  el.openHistory.addEventListener('click', function () {
+    renderHistory();
+    show('history');
+  });
+
+  // 개별 삭제 (이벤트 위임)
+  el.historyList.addEventListener('click', function (e) {
+    var del = e.target.closest('.history-item__del');
+    if (!del) return;
+    window.ChoiceHelper.history.remove(del.dataset.id);
+    renderHistory();
   });
 
   // 처음으로
@@ -269,6 +369,7 @@
   }
   el.labelsBack.addEventListener('click', goHome);
   el.resultHome.addEventListener('click', goHome);
+  el.historyBack.addEventListener('click', goHome);
 
   // 초기 화면
   show('home');

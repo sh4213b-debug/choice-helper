@@ -524,3 +524,79 @@ body {
   gap: 10px;
   margin-top: auto;
 }
+
+/* ── 홈: 지난 기록 링크 ── */
+.link-subtle {
+  margin: 18px auto 0;
+  display: block;
+  background: none;
+  border: none;
+  color: var(--gold);
+  font-family: var(--serif);
+  font-size: 17px;
+  letter-spacing: 0.03em;
+  opacity: 0.85;
+  cursor: pointer;
+}
+.link-subtle:hover { opacity: 1; text-decoration: underline; }
+
+/* ── 히스토리 ── */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--card-border);
+  background: rgba(24, 18, 40, 0.55);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.history-item__main { flex: 1; min-width: 0; }
+
+.history-item__summary {
+  font-size: 17px;
+  color: var(--ivory);
+  line-height: 1.35;
+  word-break: keep-all;
+}
+
+.history-item__time {
+  margin-top: 3px;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+.history-item__del {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.history-item__del:hover {
+  background: rgba(244, 114, 182, 0.14);
+  color: #ff9ad8;
+  border-color: rgba(244, 114, 182, 0.4);
+}
+
+.history-empty {
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 18px;
+  margin-top: 40px;
+}
