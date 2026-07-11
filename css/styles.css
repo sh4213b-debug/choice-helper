@@ -1,28 +1,45 @@
-/* styles.css — Choice Helper v0.1
-   콘셉트: 보라/자수정 다크 배경 + 핑크 숫자. 모바일 우선. */
+/* styles.css — Choice Helper
+   콘셉트: "운명의 오라클" — 점술사/크리스털 오브 배경 + 금색·상아 포인트,
+   필기체 타이포. 주사위는 딥 자수정 레진. 모바일 우선. */
+
+/* 손글씨(필기체) 폰트 — 로컬 번들(한글 전체+라틴 서브셋), 외부 URL 없음 */
+@font-face {
+  font-family: 'Nanum Pen Script';
+  src: url('../fonts/nanum-pen-script.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
 
 :root {
-  /* 딥 네이비~차콜 베이스 (§3.1), 보라는 포인트로만 */
-  --bg-0: #0d1020;
-  --bg-1: #141a2e;
-  --bg-2: #241a44;
+  /* 오라클 팔레트 (배경 이미지에서 추출) */
+  --bg-base: #14101f;      /* fallback·오버레이 베이스 */
+  --gold: #f0c36a;         /* 주 포인트: 타이틀·테두리·버튼·글로우 */
+  --gold-deep: #c9932f;    /* hover·보조선 */
+  --robe-blue: #2b3a7a;
+  --robe-purple: #6b3fa0;  /* 주사위와 연결되는 보조 포인트 */
+  --ivory: #f5eedc;        /* 본문 텍스트 */
+
+  /* 기존 참조 유지 (주사위 CSS fallback·연출 등에서 사용) */
   --amethyst: #8b5cf6;
   --amethyst-soft: #a78bfa;
   --pink: #f472b6;
   --pink-bright: #ff7ac2;
-  --text: #f3ecff;
-  --text-dim: #b9a9d9;
-  --text-faint: #8a7bb0;
-  --card: rgba(139, 92, 246, 0.10);
-  --card-border: rgba(167, 139, 250, 0.28);
-  /* 시안의 "밝은 카드" 느낌을 다크 테마에 맞춰 살짝 밝은 표면으로 */
-  --type-card-bg: linear-gradient(180deg, rgba(58, 44, 92, 0.55), rgba(34, 24, 58, 0.55));
-  --type-card-border: rgba(167, 139, 250, 0.22);
+
+  --text: var(--ivory);
+  --text-dim: #cdbfa0;
+  --text-faint: #9a8f78;
+  --card: rgba(24, 18, 40, 0.55);
+  --card-border: rgba(240, 195, 106, 0.25);
+  --type-card-bg: rgba(24, 18, 40, 0.55);
+  --type-card-border: rgba(240, 195, 106, 0.25);
   --radius: 18px;
-  --shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+  --hand: 'Nanum Pen Script', "Apple SD Gothic Neo", "Noto Sans KR", cursive;
 }
 
 * { box-sizing: border-box; }
+
+/* 폼 요소(button/input 등)는 기본적으로 폰트를 상속하지 않으므로 강제 상속 */
+button, input, select, textarea { font-family: inherit; }
 
 html, body {
   margin: 0;
@@ -31,13 +48,12 @@ html, body {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo",
-    "Noto Sans KR", Roboto, sans-serif;
+  font-family: var(--hand);
   color: var(--text);
   background:
-    radial-gradient(1200px 800px at 50% -10%, var(--bg-2), transparent 60%),
-    radial-gradient(900px 600px at 90% 110%, rgba(244, 114, 182, 0.12), transparent 55%),
-    linear-gradient(180deg, var(--bg-1), var(--bg-0));
+    radial-gradient(1200px 900px at 50% -10%, #241733, transparent 60%),
+    radial-gradient(900px 600px at 90% 110%, rgba(107, 63, 160, 0.18), transparent 55%),
+    linear-gradient(180deg, #17122a, var(--bg-base));
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
 }
@@ -61,29 +77,33 @@ body {
 }
 
 /* ── 헤더 ── */
-.app-header { text-align: center; margin-bottom: 28px; }
+/* 필기체는 획이 얇아 sans 대비 크게 잡는다 */
+.app-header { text-align: center; margin-bottom: 24px; }
 
 .app-title {
-  font-size: 30px;
-  font-weight: 800;
-  margin: 0 0 6px;
-  letter-spacing: -0.02em;
-  background: linear-gradient(120deg, var(--amethyst-soft), var(--pink-bright));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  font-family: var(--hand);
+  font-size: 46px;
+  font-weight: 400;
+  line-height: 1.05;
+  margin: 0 0 2px;
+  letter-spacing: 0.04em;
+  color: var(--gold);
+  text-shadow: 0 0 18px rgba(240, 195, 106, 0.55), 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
 .screen-title {
-  font-size: 22px;
-  font-weight: 700;
-  margin: 0 0 6px;
+  font-family: var(--hand);
+  font-size: 34px;
+  font-weight: 400;
+  margin: 0 0 2px;
+  color: var(--gold);
+  text-shadow: 0 0 14px rgba(240, 195, 106, 0.4);
 }
 
 .app-subtitle {
   margin: 0;
   color: var(--text-dim);
-  font-size: 14px;
+  font-size: 21px;
 }
 
 /* ── 선택 타입 카드 (가로 배치, §3.2) ── */
@@ -96,68 +116,136 @@ body {
   margin-bottom: auto;
 }
 
+/* 반투명 다크 글래스 + 금색 테두리 */
 .type-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 12px;
+  gap: 10px;
   min-height: 168px;
   padding: 22px 14px;
   border: 1px solid var(--type-card-border);
   border-radius: 22px;
   background: var(--type-card-bg);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   color: var(--text);
   cursor: pointer;
   text-align: center;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
   transition: transform 0.16s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .type-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.5);
-  border-color: var(--amethyst-soft);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.55), 0 0 20px rgba(240, 195, 106, 0.15);
+  border-color: rgba(240, 195, 106, 0.6);
 }
 .type-card:active { transform: translateY(-2px) scale(0.99); }
 
-/* 큰 세리프 글리프. or·/·· 구분자는 작고 연하게 */
+/* 큰 표기 글리프(필기체, 금색). 구분자는 작고 연하게 */
 .type-card__glyph {
-  font-family: Georgia, "Times New Roman", serif;
-  font-weight: 300;
-  font-size: 34px;
-  line-height: 1.1;
+  font-family: var(--hand);
+  font-weight: 400;
+  font-size: 44px;
+  line-height: 1;
   letter-spacing: 0.02em;
-  margin-top: 8px;
-  color: var(--text);
+  margin-top: 6px;
+  color: var(--gold);
 }
 .type-card__glyph em {
   font-style: normal;
-  font-size: 15px;
-  font-weight: 400;
-  color: var(--text-faint);
-  margin: 0 5px;
+  font-size: 24px;
+  color: rgba(240, 195, 106, 0.45);
+  margin: 0 3px;
   vertical-align: middle;
 }
 
 .type-card__sub {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.22em;
-  color: var(--text-faint);
+  color: rgba(240, 195, 106, 0.7);
 }
 
 .type-card__ko {
   margin-top: auto;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-dim);
+  font-size: 19px;
+  color: var(--ivory);
 }
 
 @media (max-width: 480px) {
   .type-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .type-card { min-height: 150px; padding: 20px 12px; }
-  .type-card__glyph { font-size: 28px; }
+  .type-card__glyph { font-size: 38px; }
+}
+
+/* ── 메인(오라클) 배경 + 가독성 오버레이 ── */
+/* home 화면이 표시될 때만 렌더(숨김 시 display:none 으로 함께 사라짐). */
+.screen--home { position: relative; }
+
+.screen--home::before,
+.screen--home::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+/* 배경 이미지 (로딩 전/실패 시 --bg-base fallback) */
+.screen--home::before {
+  z-index: -3;
+  background: url('../assets/bg-oracle.webp') center 20% / cover no-repeat;
+  background-color: var(--bg-base);
+}
+/* 상단은 배경이 살고 하단(카드)은 어두워지는 그라데이션 */
+.screen--home::after {
+  z-index: -2;
+  background: linear-gradient(
+    180deg,
+    rgba(20, 16, 31, 0.35) 0%,
+    rgba(20, 16, 31, 0.15) 30%,
+    rgba(20, 16, 31, 0.75) 70%,
+    rgba(20, 16, 31, 0.92) 100%
+  );
+}
+/* 모바일 세로: 오브·두 손이 상단 1/3에 오도록 크롭 기준 조정 */
+@media (max-width: 560px) {
+  .screen--home::before { background-position: center 14%; }
+}
+
+/* 오브 자리의 금빛 펄스 글로우 (정지 이미지에 생기) */
+.oracle-glow {
+  position: fixed;
+  top: 27%;
+  left: 50%;
+  width: 260px;
+  height: 260px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(240, 195, 106, 0.4) 0%,
+    rgba(240, 195, 106, 0.14) 40%,
+    rgba(240, 195, 106, 0) 70%
+  );
+  filter: blur(10px);
+  pointer-events: none;
+  z-index: -1;
+  animation: orb-pulse 3.6s ease-in-out infinite;
+}
+@keyframes orb-pulse {
+  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+  50%      { opacity: 0.9; transform: translate(-50%, -50%) scale(1.12); }
+}
+
+/* home 레이아웃: 타이틀은 상단, 카드는 하단(어두운 영역)으로 */
+.screen--home .app-header { margin-top: 8vh; }
+.screen--home .type-grid { margin-top: auto; margin-bottom: 4vh; }
+
+@media (prefers-reduced-motion: reduce) {
+  .oracle-glow { animation: none; }
+  .type-card, .btn { transition: none; }
 }
 
 /* ── 라벨 입력 ── */
@@ -217,10 +305,12 @@ body {
 /* ── 공통 버튼 ── */
 .btn {
   width: 100%;
-  padding: 15px 18px;
+  padding: 13px 18px;
   border-radius: 14px;
-  font-size: 16px;
-  font-weight: 700;
+  font-family: var(--hand);
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
   cursor: pointer;
   border: 1px solid transparent;
   transition: transform 0.12s ease, filter 0.2s ease;
@@ -228,18 +318,20 @@ body {
 
 .btn:active { transform: scale(0.98); }
 
+/* 주요 버튼: 금색 (오라클 포인트) */
 .btn--primary {
-  color: #1a0c2b;
-  background: linear-gradient(120deg, var(--amethyst-soft), var(--pink-bright));
+  color: #2a1c08;
+  background: linear-gradient(120deg, var(--gold), var(--gold-deep));
+  box-shadow: 0 6px 18px rgba(201, 147, 47, 0.3);
 }
 .btn--primary:hover { filter: brightness(1.06); }
 
 .btn--ghost {
-  color: var(--text);
+  color: var(--ivory);
   background: transparent;
   border-color: var(--card-border);
 }
-.btn--ghost:hover { background: rgba(139, 92, 246, 0.12); }
+.btn--ghost:hover { background: rgba(240, 195, 106, 0.1); }
 
 .link-back {
   margin-top: 20px;

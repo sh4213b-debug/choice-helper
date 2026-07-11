@@ -3,17 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#1a0f2e">
+  <meta name="theme-color" content="#14101f">
   <title>선택 도우미 · Choice Helper</title>
+  <!-- LCP 대비: 배경 이미지·손글씨 폰트 프리로드 -->
+  <link rel="preload" as="image" href="assets/bg-oracle.webp">
+  <link rel="preload" as="font" type="font/woff2" href="fonts/nanum-pen-script.woff2" crossorigin>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
   <main class="app" id="app">
     <!-- 1. 메인: 모드 선택 -->
     <section class="screen screen--home" id="screen-home">
+      <div class="oracle-glow" aria-hidden="true"></div>
       <header class="app-header">
         <h1 class="app-title">선택 도우미</h1>
-        <p class="app-subtitle">주사위를 굴려 결정을 도와드려요</p>
+        <p class="app-subtitle">운명의 주사위에게 묻다</p>
       </header>
 
       <div class="type-grid" id="mode-list">
