@@ -64,18 +64,44 @@ function makeNumberTexture(n) {
   return tex;
 }
 
-// ── 은은한 그라디언트 환경맵 (반사·투과 색감용) ─────────────
+// ── 스튜디오풍 환경맵 (레진 표면의 부드러운 하이라이트 반사) ──
+// 어두운 보라 베이스 위에 소프트박스 같은 밝은 반사광 몇 개를 얹어
+// 클리어코트/투과 표면이 사진처럼 빛을 물게 한다.
 function buildEnvironment(renderer) {
+  var W = 512, H = 256;
   var c = document.createElement('canvas');
-  c.width = 32;
-  c.height = 128;
+  c.width = W;
+  c.height = H;
   var ctx = c.getContext('2d');
-  var g = ctx.createLinearGradient(0, 0, 0, 128);
-  g.addColorStop(0.0, '#4a2f7a'); // 상단: 보라 하이라이트
-  g.addColorStop(0.5, '#1a1030');
-  g.addColorStop(1.0, '#2a1240'); // 하단: 핑크빛 보라
+
+  // 베이스: 위(하늘)는 보라, 아래(바닥)는 짙은 자수정
+  var g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0.0, '#2a1b52');
+  g.addColorStop(0.45, '#150d2c');
+  g.addColorStop(1.0, '#241041');
   ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 32, 128);
+  ctx.fillRect(0, 0, W, H);
+
+  // 소프트박스형 밝은 하이라이트 (반사로 잡히는 광원)
+  function softLight(x, y, rx, ry, color, alpha) {
+    var rg = ctx.createRadialGradient(x, y, 0, x, y, Math.max(rx, ry));
+    rg.addColorStop(0, color);
+    rg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(x, y);
+    ctx.scale(1, ry / rx);
+    ctx.translate(-x, -y);
+    ctx.fillStyle = rg;
+    ctx.beginPath();
+    ctx.arc(x, y, rx, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+  softLight(W * 0.30, H * 0.28, 150, 90, '#ffffff', 0.95); // 주 키라이트
+  softLight(W * 0.72, H * 0.35, 110, 70, '#ffe6c0', 0.7);  // 따뜻한 보조광
+  softLight(W * 0.55, H * 0.80, 130, 60, '#c77bff', 0.55); // 하단 보라 바운스
+  softLight(W * 0.88, H * 0.68, 90, 55, '#ff7ac2', 0.4);   // 핑크 림
 
   var tex = new THREE.CanvasTexture(c);
   tex.mapping = THREE.EquirectangularReflectionMapping;
@@ -179,12 +205,20 @@ function createStage(canvas) {
   // 주사위 지오메트리·재질
   var geometry = new THREE.IcosahedronGeometry(DIE_RADIUS, 0);
 
-  // 면마다 미묘한 농담 차이(마블링): 정점 색으로 살짝 흔든다
+  // 면 데이터는 position 기준이므로 법선 재계산 전에 뽑아둔다
+  var faces = computeFaces(geometry);
+
+  // ★ 각진 d20 룩의 핵심: 면 단위 평평한 법선(flat shading).
+  // IcosahedronGeometry 기본 법선은 구처럼 매끈해 둥글게 보이므로,
+  // non-indexed 지오메트리에 삼각형별 법선을 재계산해 또렷한 면을 만든다.
+  geometry.computeVertexNormals();
+
+  // 면마다 아주 미묘한 농담 차이(레진 마블링): 정점 색으로 살짝 흔든다
   var vcount = geometry.attributes.position.count;
   var colors = new Float32Array(vcount * 3);
   var base = new THREE.Color(AMETHYST);
   for (var fi = 0; fi < vcount / 3; fi++) {
-    var jitter = 0.82 + ((fi * 2654435761) % 1000) / 1000 * 0.32; // 결정적 의사난수
+    var jitter = 0.9 + ((fi * 2654435761) % 1000) / 1000 * 0.22; // 0.90~1.12
     var col = base.clone().multiplyScalar(jitter);
     for (var v = 0; v < 3; v++) {
       colors[(fi * 3 + v) * 3 + 0] = col.r;
@@ -194,20 +228,24 @@ function createStage(canvas) {
   }
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
+  // 반투명 자수정 레진: 높은 투과 + 보라 감쇠 + 클리어코트 광택
   var material = new THREE.MeshPhysicalMaterial({
     vertexColors: true,
     metalness: 0.0,
-    roughness: 0.14,
-    transmission: 0.45,
-    thickness: 1.3,
-    ior: 1.5,
+    roughness: 0.07,
+    transmission: 0.82,
+    thickness: 1.6,
+    ior: 1.55,
     clearcoat: 1.0,
-    clearcoatRoughness: 0.16,
-    emissive: new THREE.Color(0x35104f),
-    emissiveIntensity: 0.55,
-    attenuationColor: new THREE.Color(0x9b45e0),
-    attenuationDistance: 1.6,
-    envMapIntensity: 1.15,
+    clearcoatRoughness: 0.07,
+    specularIntensity: 1.0,
+    iridescence: 0.14,
+    iridescenceIOR: 1.3,
+    emissive: new THREE.Color(0x2a0d44),
+    emissiveIntensity: 0.35,
+    attenuationColor: new THREE.Color(0x8a35d0),
+    attenuationDistance: 0.9,
+    envMapIntensity: 1.6,
     transparent: true
   });
 
@@ -215,7 +253,6 @@ function createStage(canvas) {
   var body = new THREE.Mesh(geometry, material);
   die.add(body);
 
-  var faces = computeFaces(geometry);
   for (var i = 0; i < faces.length; i++) {
     die.add(makeNumberPlane(faces[i]));
   }
