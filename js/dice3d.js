@@ -41,27 +41,27 @@ function makeNumberTexture(n) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  // 은은한 발광 후광
-  ctx.shadowColor = 'rgba(255, 190, 150, 0.8)';
+  // 은은한 금빛 발광 후광
+  ctx.shadowColor = 'rgba(255, 214, 140, 0.85)';
   ctx.shadowBlur = S * 0.06;
 
-  // 핑크골드 그라디언트 채움 (#F0A882 계열)
+  // 골드 그라디언트 채움 (보라 레진과 대비되는 금색 숫자 — 참고: Moon Dice)
   var grad = ctx.createLinearGradient(0, S * 0.2, 0, S * 0.8);
-  grad.addColorStop(0, '#ffe0c2');
-  grad.addColorStop(0.5, '#f4b088');
-  grad.addColorStop(1, '#e08a6a');
+  grad.addColorStop(0, '#fff2cf');
+  grad.addColorStop(0.5, '#f0c36a');
+  grad.addColorStop(1, '#c9932f');
   ctx.fillStyle = grad;
   ctx.fillText(str, cx, cy);
 
   // 가는 어두운 외곽선 (글리프 자체 윤곽만)
   ctx.shadowBlur = 0;
   ctx.lineWidth = S * 0.018;
-  ctx.strokeStyle = 'rgba(70, 28, 18, 0.85)';
+  ctx.strokeStyle = 'rgba(60, 40, 12, 0.85)';
   ctx.strokeText(str, cx, cy);
 
   // 6/9 구분 밑줄
   if (n === 6 || n === 9) {
-    ctx.strokeStyle = '#f0a882';
+    ctx.strokeStyle = '#f0c36a';
     ctx.lineWidth = S * 0.03;
     ctx.beginPath();
     ctx.moveTo(S * 0.36, S * 0.74);
@@ -90,6 +90,42 @@ function makeGlitterSprite() {
   var tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
+}
+
+// ── 레진 속 금박 인클루전 (Points, 주사위 내부에 부유) ──────
+// 보라 레진 안에 금 조각이 박힌 룩(참고: purple & gold resin "Moon Dice").
+function makeGoldFlecks(glitterTex) {
+  var N = 46;
+  var g = new THREE.BufferGeometry();
+  var positions = new Float32Array(N * 3);
+  var sizes = new Float32Array(N);
+  var R = DIE_RADIUS * 0.82;
+  for (var i = 0; i < N; i++) {
+    // 구 내부 균일 분포 (표면 아닌 부피)
+    var u = Math.random();
+    var r = R * Math.cbrt(u);
+    var theta = Math.random() * Math.PI * 2;
+    var phi = Math.acos(2 * Math.random() - 1);
+    positions[i * 3 + 0] = r * Math.sin(phi) * Math.cos(theta);
+    positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+    positions[i * 3 + 2] = r * Math.cos(phi);
+    sizes[i] = 0.04 + Math.random() * 0.07;
+  }
+  g.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  g.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+  var m = new THREE.PointsMaterial({
+    map: glitterTex,
+    color: 0xf3c775,       // 금박
+    size: 0.09,
+    sizeAttenuation: true,
+    transparent: true,
+    opacity: 0.9,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+  var pts = new THREE.Points(g, m);
+  pts.renderOrder = 3; // 셸(2) 위, 숫자(6) 아래
+  return pts;
 }
 
 // ── 정이십면체 면 데이터 (중심·법선) + 숫자 1~20 배정 ───────
@@ -224,9 +260,9 @@ function createStage(canvas) {
     attenuationColor: new THREE.Color(0x7a2fb0),
     attenuationDistance: 1.8,
     specularIntensity: 1.0,
-    sheen: 0.4,
+    sheen: 0.5,
     sheenRoughness: 0.4,
-    sheenColor: new THREE.Color(0xc79bff),
+    sheenColor: new THREE.Color(0xe8c690), // 금빛 sheen(퍼플+골드 조합)
     emissive: new THREE.Color(0x1a0733),
     emissiveIntensity: 0.12,
     envMapIntensity: 1.7,
@@ -240,7 +276,10 @@ function createStage(canvas) {
   // 내추럴 20 골드 파티클용 스프라이트
   var glitterTex = makeGlitterSprite();
 
-  // (2) 숫자
+  // (2) 레진 속 금박 인클루전 — 주사위와 함께 회전
+  die.add(makeGoldFlecks(glitterTex));
+
+  // (3) 숫자
   for (var i = 0; i < faces.length; i++) {
     die.add(makeNumberPlane(faces[i]));
   }

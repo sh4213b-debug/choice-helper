@@ -50,12 +50,63 @@ html, body {
 body {
   font-family: var(--serif);
   color: var(--text);
+  /* 우주·신비 콘셉트(참고 이미지: 별하늘 속 천체) — 모두 절차적(외부 이미지 없음).
+     레이어: 성운 구름 · 은은한 금빛 천체광 · 미세 별먼지 · 심우주 베이스 그라디언트 */
   background:
-    radial-gradient(1200px 900px at 50% -10%, #241733, transparent 60%),
-    radial-gradient(900px 600px at 90% 110%, rgba(107, 63, 160, 0.18), transparent 55%),
-    linear-gradient(180deg, #17122a, var(--bg-base));
+    radial-gradient(900px 620px at 78% 12%, rgba(120, 84, 200, 0.28), transparent 60%),
+    radial-gradient(760px 560px at 16% 26%, rgba(46, 74, 150, 0.30), transparent 62%),
+    radial-gradient(680px 520px at 60% 88%, rgba(150, 60, 130, 0.20), transparent 60%),
+    radial-gradient(520px 420px at 50% 30%, rgba(240, 195, 106, 0.10), transparent 60%),
+    /* 미세 별먼지 (촘촘한 작은 별) */
+    radial-gradient(1px 1px at 40px 60px, rgba(255,255,255,0.75), transparent 60%),
+    radial-gradient(1px 1px at 130px 30px, rgba(214,226,255,0.7), transparent 60%),
+    radial-gradient(1px 1px at 80px 150px, rgba(255,244,214,0.7), transparent 60%),
+    radial-gradient(1px 1px at 190px 110px, rgba(255,255,255,0.6), transparent 60%),
+    linear-gradient(180deg, #0c0a1a 0%, #120e26 45%, #0a0814 100%);
+  background-size:
+    100% 100%, 100% 100%, 100% 100%, 100% 100%,
+    220px 220px, 220px 220px, 220px 220px, 220px 220px,
+    100% 100%;
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
+}
+
+/* 큰 별 레이어 — 은은하게 반짝임(트윙클) */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(255,255,255,0.95), transparent 60%),
+    radial-gradient(1.3px 1.3px at 160px 96px, rgba(220,230,255,0.85), transparent 60%),
+    radial-gradient(1.8px 1.8px at 96px 200px, rgba(255,246,220,0.9), transparent 60%),
+    radial-gradient(1.2px 1.2px at 260px 40px, rgba(255,255,255,0.8), transparent 60%),
+    radial-gradient(1.5px 1.5px at 300px 240px, rgba(206,224,255,0.85), transparent 60%);
+  background-size: 340px 340px;
+  animation: star-twinkle 5.5s ease-in-out infinite;
+}
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+
+/* 성운 하이라이트 — 아주 느리게 흐르는 천체광 */
+body::after {
+  content: '';
+  position: fixed;
+  inset: -20%;
+  z-index: -9;
+  pointer-events: none;
+  background:
+    radial-gradient(600px 460px at 30% 20%, rgba(122, 79, 200, 0.20), transparent 60%),
+    radial-gradient(520px 420px at 72% 66%, rgba(56, 96, 176, 0.18), transparent 62%);
+  animation: nebula-drift 28s ease-in-out infinite alternate;
+}
+@keyframes nebula-drift {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(-3%, 2%, 0) scale(1.06); }
 }
 
 .app {
@@ -133,10 +184,12 @@ body {
 /* 데스크톱·태블릿: 한 줄 4개 / 좁은 모바일(≤480px): 2×2 */
 .type-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr)); /* 2×2, 네 카드 항상 동일 폭 */
+  justify-items: stretch;
   gap: 14px;
-  margin-top: auto;
-  margin-bottom: auto;
+  width: 100%;
+  max-width: 360px;   /* 카드 그룹을 아담하게 묶어 화면 정중앙 배치 */
+  margin: auto;       /* 수직·수평 정중앙 */
 }
 
 /* 반투명 다크 글래스 + 금색 테두리 */
@@ -199,13 +252,13 @@ body {
 }
 
 @media (max-width: 480px) {
-  .type-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .type-grid { gap: 12px; max-width: none; } /* 좁은 화면에선 폭 꽉 채움 */
   .type-card { min-height: 150px; padding: 20px 12px; }
   .type-card__glyph { font-size: 30px; }
 }
 
-/* ── 메인(오라클) 배경 + 가독성 오버레이 ── */
-/* home 화면이 표시될 때만 렌더(숨김 시 display:none 으로 함께 사라짐). */
+/* ── 메인 배경 위 천체 포커스광 + 가독성 오버레이 ── */
+/* 전역 우주 배경은 body에 있고, home에서는 중앙 천체광을 얹는다. */
 .screen--home { position: relative; }
 
 .screen--home::before,
@@ -215,44 +268,41 @@ body {
   inset: 0;
   pointer-events: none;
 }
-/* 배경 이미지 (로딩 전/실패 시 --bg-base fallback) */
+/* 상단 중앙의 천체(오브) 포커스광 — 보라+금빛 */
 .screen--home::before {
   z-index: -3;
-  background: url('../assets/bg-oracle.webp') center 20% / cover no-repeat;
-  background-color: var(--bg-base);
+  background:
+    radial-gradient(360px 360px at 50% 26%, rgba(240, 195, 106, 0.16), transparent 62%),
+    radial-gradient(520px 520px at 50% 24%, rgba(123, 79, 200, 0.22), transparent 65%);
 }
-/* 상단은 배경이 살고 하단(카드)은 어두워지는 그라데이션 */
+/* 하단(카드 영역) 가독성 확보용 어두운 그라데이션 */
 .screen--home::after {
   z-index: -2;
   background: linear-gradient(
     180deg,
-    rgba(20, 16, 31, 0.35) 0%,
-    rgba(20, 16, 31, 0.15) 30%,
-    rgba(20, 16, 31, 0.75) 70%,
-    rgba(20, 16, 31, 0.92) 100%
+    rgba(10, 8, 20, 0) 0%,
+    rgba(10, 8, 20, 0.15) 40%,
+    rgba(10, 8, 20, 0.6) 78%,
+    rgba(10, 8, 20, 0.85) 100%
   );
 }
-/* 모바일 세로: 오브·두 손이 상단 1/3에 오도록 크롭 기준 조정 */
-@media (max-width: 560px) {
-  .screen--home::before { background-position: center 14%; }
-}
 
-/* 오브 자리의 금빛 펄스 글로우 (정지 이미지에 생기) */
+/* 중앙 천체 글로우 (금빛 펄스 오브) */
 .oracle-glow {
   position: fixed;
-  top: 27%;
+  top: 26%;
   left: 50%;
-  width: 260px;
-  height: 260px;
+  width: 280px;
+  height: 280px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(240, 195, 106, 0.4) 0%,
-    rgba(240, 195, 106, 0.14) 40%,
-    rgba(240, 195, 106, 0) 70%
+    rgba(240, 195, 106, 0.42) 0%,
+    rgba(200, 150, 240, 0.2) 38%,
+    rgba(240, 195, 106, 0) 72%
   );
-  filter: blur(10px);
+  filter: blur(12px);
   pointer-events: none;
   z-index: -1;
   animation: orb-pulse 3.6s ease-in-out infinite;
@@ -262,12 +312,14 @@ body {
   50%      { opacity: 0.9; transform: translate(-50%, -50%) scale(1.12); }
 }
 
-/* home 레이아웃: 타이틀은 상단, 카드는 하단(어두운 영역)으로 */
-.screen--home .app-header { margin-top: 8vh; }
-.screen--home .type-grid { margin-top: auto; margin-bottom: 4vh; }
+/* home 레이아웃: 타이틀 상단, 카드는 화면 정중앙 배치 */
+.screen--home .app-header { margin-top: 7vh; }
+.screen--home .type-grid { margin-top: auto; margin-bottom: auto; }
 
 @media (prefers-reduced-motion: reduce) {
-  .oracle-glow { animation: none; }
+  .oracle-glow,
+  body::before,
+  body::after { animation: none; }
   .type-card, .btn { transition: none; }
 }
 
