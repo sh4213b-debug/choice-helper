@@ -622,3 +622,17 @@ body {
   font-size: 18px;
   margin-top: 40px;
 }
+
+/* ── v0.5 반응형 보강 ── */
+/* 낮은 높이(가로 모드 등): 세로 여백 축소로 카드가 잘리지 않게 */
+@media (max-height: 620px) {
+  .screen--home .app-header { margin-top: 3vh; }
+  .screen--home .type-grid { margin-bottom: 2vh; }
+  .app-header { margin-bottom: 14px; }
+  .dice-stage { height: 200px; }
+  .app-title { font-size: 28px; }
+}
+/* 넓은 화면: 앱 폭은 유지하되 상단 여백을 조금 더 */
+@media (min-width: 900px) {
+  .app { padding-top: calc(env(safe-area-inset-top) + 48px); }
+}
