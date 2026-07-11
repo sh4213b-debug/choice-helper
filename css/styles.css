@@ -308,6 +308,46 @@ body {
   background: linear-gradient(145deg, rgba(123, 47, 190, 0.55), rgba(58, 24, 90, 0.75));
   border: 1px solid rgba(167, 139, 250, 0.4);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 24px rgba(139, 92, 246, 0.35);
+  transition: transform 0.12s ease, box-shadow 0.2s ease;
+}
+
+.dice-fallback__cube.is-rolling { animation: dice-shake 0.35s linear infinite; }
+.dice-fallback__cube.is-settle { animation: dice-settle 0.24s ease-out; }
+.dice-fallback__cube.is-nat20 {
+  color: #ffe08a;
+  box-shadow: 0 0 34px rgba(255, 209, 122, 0.85), inset 0 0 26px rgba(255, 209, 122, 0.6);
+  border-color: rgba(255, 209, 122, 0.9);
+}
+.dice-fallback__cube.is-nat1 {
+  color: #ff8a8a;
+  box-shadow: 0 0 30px rgba(255, 43, 59, 0.7), inset 0 0 22px rgba(120, 20, 30, 0.8);
+  border-color: rgba(255, 43, 59, 0.8);
+}
+
+@keyframes dice-shake {
+  0%   { transform: rotate(0deg)   translate(0, 0); }
+  25%  { transform: rotate(8deg)   translate(2px, -2px); }
+  50%  { transform: rotate(-6deg)  translate(-2px, 2px); }
+  75%  { transform: rotate(5deg)   translate(1px, 1px); }
+  100% { transform: rotate(0deg)   translate(0, 0); }
+}
+@keyframes dice-settle {
+  0%   { transform: scale(1.12); }
+  60%  { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+
+.dice-caption {
+  position: absolute;
+  top: 4px;
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+  pointer-events: none;
 }
 
 /* ── 결과 ── */

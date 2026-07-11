@@ -222,8 +222,95 @@ function createStage(canvas) {
   scene.add(die);
 
   // ── 렌더 루프 ──
+  // 내추럴 1 연출용 붉은 플래시 라이트 (평소 꺼둠)
+  var flashLight = new THREE.PointLight(0xff2b3b, 0, 14);
+  flashLight.position.set(0, 0, 3.2);
+  scene.add(flashLight);
+
+  // ── 굴림 애니메이션 상태 (§3.3) ─────────────────────────────
+  var ROLL_MS = 1750;    // 총 텀블링 시간 (1.5~2초)
+  var SETTLE_MS = 240;   // 정지 순간 settle 모션
+  var mode = 'idle';     // idle | roll | settle | done
+  var startT = 0;
+  var finalQ = null;
+  var onDone = null;
+  var natType = 0;       // 20 | 1 | 0
+  var forceFinish = false;
+  var baseEmissive = material.emissiveIntensity;
+
+  // 텀블링 축 2개 (둘 다 각도가 0으로 수렴 → 정확히 finalQ에 착지)
+  var axis1 = new THREE.Vector3(0.5, 1, 0.35).normalize();
+  var axis2 = new THREE.Vector3(1, 0.2, -0.6).normalize();
+  var totalA1 = Math.PI * 2 * 5; // 5회전
+  var totalA2 = Math.PI * 2 * 3; // 3회전
+  var tmpQ1 = new THREE.Quaternion();
+  var tmpQ2 = new THREE.Quaternion();
+  var camDir = new THREE.Vector3(0, 0, 1);
+
+  var natParticles = null; // 내추럴 20 골드 파티클
+
+  function easeOutQuart(x) { return 1 - Math.pow(1 - x, 4); }
+
+  // 결과 숫자 면이 카메라(+Z)를 향하도록 하는 최종 쿼터니언
+  function computeFinalQ(number) {
+    var face = faces[number - 1]; // number = index+1
+    return new THREE.Quaternion().setFromUnitVectors(face.normal, camDir);
+  }
+
+  function spawnGoldBurst() {
+    var N = 150;
+    var g = new THREE.BufferGeometry();
+    var positions = new Float32Array(N * 3);
+    var vel = new Float32Array(N * 3);
+    for (var i = 0; i < N; i++) {
+      // 구면 방향 무작위 + 속도
+      var theta = Math.random() * Math.PI * 2;
+      var phi = Math.acos(2 * Math.random() - 1);
+      var sp = 1.8 + Math.random() * 2.2;
+      vel[i * 3 + 0] = Math.sin(phi) * Math.cos(theta) * sp;
+      vel[i * 3 + 1] = Math.sin(phi) * Math.sin(theta) * sp;
+      vel[i * 3 + 2] = Math.cos(phi) * sp;
+    }
+    g.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    var m = new THREE.PointsMaterial({
+      color: 0xffd27a,
+      size: 0.08,
+      transparent: true,
+      opacity: 1,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    natParticles = new THREE.Points(g, m);
+    natParticles.userData = { vel: vel, age: 0 };
+    scene.add(natParticles);
+  }
+
+  function disposeParticles() {
+    if (!natParticles) return;
+    scene.remove(natParticles);
+    natParticles.geometry.dispose();
+    natParticles.material.dispose();
+    natParticles = null;
+  }
+
+  function triggerNat() {
+    if (natType === 20) spawnGoldBurst();
+    // 내추럴 1은 settle 단계에서 flashLight 로 붉은 플래시
+  }
+
+  function updateParticles(dt) {
+    if (!natParticles) return;
+    var ud = natParticles.userData;
+    ud.age += dt;
+    var pos = natParticles.geometry.attributes.position.array;
+    for (var i = 0; i < pos.length; i++) pos[i] += ud.vel[i] * dt;
+    natParticles.geometry.attributes.position.needsUpdate = true;
+    natParticles.material.opacity = Math.max(0, 1 - ud.age / 0.85);
+    if (ud.age > 0.85) disposeParticles();
+  }
+
   var running = true;
-  var idle = true; // v0.2.3에서 굴리는 동안 false
+  var idle = true;
   var lastT = 0;
 
   function resize() {
@@ -238,10 +325,50 @@ function createStage(canvas) {
     if (!running) return;
     var dt = lastT ? (t - lastT) / 1000 : 0;
     lastT = t;
-    if (idle) {
+
+    if (mode === 'idle') {
       die.rotation.y += dt * 0.6;
       die.rotation.x += dt * 0.25;
+    } else if (mode === 'roll') {
+      if (!startT) startT = t;
+      var p = Math.min((t - startT) / ROLL_MS, 1);
+      if (forceFinish) p = 1; // 탭 스킵
+      var k = 1 - easeOutQuart(p); // 감속하며 0으로
+      tmpQ1.setFromAxisAngle(axis1, totalA1 * k);
+      tmpQ2.setFromAxisAngle(axis2, totalA2 * k);
+      die.quaternion.copy(finalQ).multiply(tmpQ1).multiply(tmpQ2);
+      if (p >= 1) {
+        mode = 'settle';
+        startT = t;
+        forceFinish = false;
+        triggerNat();
+      }
+    } else if (mode === 'settle') {
+      var sp = Math.min((t - startT) / SETTLE_MS, 1);
+      var wave = Math.sin(sp * Math.PI); // 0→1→0
+      die.quaternion.copy(finalQ);
+      die.scale.setScalar(1 + 0.06 * wave); // 살짝 튕김
+      if (natType === 20) {
+        material.emissiveIntensity = baseEmissive + 2.4 * wave; // 골드 글로우 펄스
+        flashLight.color.setHex(0xffd27a);
+        flashLight.intensity = 6 * wave;
+      } else if (natType === 1) {
+        material.emissiveIntensity = baseEmissive * (1 - 0.7 * wave); // 어두워짐
+        flashLight.color.setHex(0xff2b3b);
+        flashLight.intensity = 9 * wave; // 붉은 플래시
+      } else {
+        material.emissiveIntensity = baseEmissive + 0.8 * wave; // 일반 글로우
+      }
+      if (sp >= 1) {
+        die.scale.setScalar(1);
+        material.emissiveIntensity = baseEmissive;
+        flashLight.intensity = 0;
+        mode = 'done';
+        if (onDone) { var d = onDone; onDone = null; d(); }
+      }
     }
+
+    updateParticles(dt);
     renderer.render(scene, camera);
     rafId = requestAnimationFrame(frame);
   }
@@ -251,22 +378,31 @@ function createStage(canvas) {
   window.addEventListener('resize', onResize);
   resize();
 
-  // 컨트롤러: v0.2.3에서 setIdle/rollTo 등을 사용
   return {
-    THREE: THREE,
-    scene: scene,
-    camera: camera,
-    renderer: renderer,
-    die: die,
-    body: body,
-    material: material,
     faces: faces,
-    setIdle: function (v) { idle = v; },
-    render: function () { renderer.render(scene, camera); },
+    // 결과 숫자로 굴림 시작. done() 콜백은 정지·연출 완료 후 호출.
+    rollTo: function (number, opts) {
+      opts = opts || {};
+      finalQ = computeFinalQ(number);
+      natType = number === 20 ? 20 : number === 1 ? 1 : 0;
+      onDone = opts.onComplete || null;
+      startT = 0;
+      forceFinish = false;
+      idle = false;
+      disposeParticles();
+      mode = 'roll';
+    },
+    // 탭 스킵: 진행 중이면 즉시 최종 자세로 스냅
+    skip: function () {
+      if (mode === 'roll') forceFinish = true;
+    },
+    isAnimating: function () { return mode === 'roll' || mode === 'settle'; },
+    setIdle: function (v) { idle = !!v; mode = v ? 'idle' : mode; },
     dispose: function () {
       running = false;
       cancelAnimationFrame(rafId);
       window.removeEventListener('resize', onResize);
+      disposeParticles();
       scene.traverse(function (obj) {
         if (obj.geometry) obj.geometry.dispose();
         if (obj.material) {

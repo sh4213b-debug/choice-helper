@@ -36,7 +36,11 @@
     resultHome: document.getElementById('result-home'),
     diceStage: document.getElementById('dice-stage'),
     diceCanvas: document.getElementById('dice-canvas'),
-    diceFallback: document.getElementById('dice-fallback')
+    diceFallback: document.getElementById('dice-fallback'),
+    diceFallbackNum: document.getElementById('dice-fallback-num'),
+    diceCaption: document.getElementById('dice-caption'),
+    diceHint: document.getElementById('dice-hint'),
+    resultActions: document.querySelector('.result-actions')
   };
 
   // ── 3D 주사위 스테이지 수명 관리 ────────────────────────────
@@ -111,20 +115,97 @@
     return labels;
   }
 
-  // ── 결과 렌더링 ─────────────────────────────────────────────
+  // ── 결과 렌더링 (v0.2.3: 선택지별 순차 굴림 → 정지 후 카드 공개) ──
+  var activeRoller = null; // 현재 굴리는 주사위 (탭 스킵 대상)
+  var seqTimer = null;     // 선택지 간 간격 타이머
+
+  function setActionsVisible(v) {
+    el.resultActions.style.visibility = v ? 'visible' : 'hidden';
+  }
+
   function renderResults() {
+    if (seqTimer) { clearTimeout(seqTimer); seqTimer = null; }
     var results = dice.rollAll(state.count);
+    var labels = state.labels;
 
+    // 초기화: 카드·배너·액션 숨기고 스테이지 준비
     el.resultList.innerHTML = '';
-    for (var i = 0; i < results.length; i++) {
-      el.resultList.appendChild(buildResultCard(state.labels[i], results[i]));
-    }
-
-    // 동점 배너 (선택지 2개 이상일 때만 의미)
-    el.tieBanner.classList.toggle('is-hidden', !dice.hasTie(results));
+    el.tieBanner.classList.add('is-hidden');
+    setActionsVisible(false);
 
     show('result');
-    mountDice(); // v0.2.2: 결과 화면에 3D 주사위 표시 (굴림 애니메이션은 v0.2.3)
+    mountDice();
+    el.diceHint.classList.remove('is-hidden');
+
+    // WebGL 가능 시 3D, 아니면 CSS fallback 로 동일 인터페이스(roll/skip)
+    activeRoller = diceStage ? make3DRoller() : makeFallbackRoller();
+
+    var i = 0;
+    function next() {
+      if (i >= results.length) { finishSequence(results); return; }
+      var idx = i;
+      el.diceCaption.textContent =
+        results.length > 1 ? '굴리는 중 · ' + labels[idx] : '';
+      activeRoller.roll(results[idx].roll, function () {
+        el.resultList.appendChild(buildResultCard(labels[idx], results[idx]));
+        i++;
+        if (i < results.length) seqTimer = setTimeout(next, 420);
+        else finishSequence(results);
+      });
+    }
+    next();
+  }
+
+  function finishSequence(results) {
+    el.diceHint.classList.add('is-hidden');
+    el.diceCaption.textContent = '';
+    el.tieBanner.classList.toggle('is-hidden', !dice.hasTie(results));
+    setActionsVisible(true);
+  }
+
+  // 3D 주사위 롤러 (dice3d 컨트롤러 래핑)
+  function make3DRoller() {
+    return {
+      roll: function (n, done) { diceStage.rollTo(n, { onComplete: done }); },
+      skip: function () { diceStage.skip(); }
+    };
+  }
+
+  // CSS fallback 롤러 (WebGL 미지원): 숫자를 감속하며 셔플 후 정지
+  function makeFallbackRoller() {
+    var cube = el.diceFallback.querySelector('.dice-fallback__cube');
+    var DUR = 1500, timer = null, finalVal = 0, doneCb = null, startAt = 0, done = true;
+
+    function settle() {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      el.diceFallbackNum.textContent = finalVal;
+      cube.classList.remove('is-rolling');
+      cube.classList.toggle('is-nat20', finalVal === 20);
+      cube.classList.toggle('is-nat1', finalVal === 1);
+      cube.classList.add('is-settle');
+      setTimeout(function () { cube.classList.remove('is-settle'); }, 240);
+      if (doneCb) { var d = doneCb; doneCb = null; d(); }
+    }
+    function tick() {
+      var p = Math.min((Date.now() - startAt) / DUR, 1);
+      if (p < 1) {
+        el.diceFallbackNum.textContent = 1 + Math.floor(Math.random() * 20);
+        timer = setTimeout(tick, 40 + p * p * 170); // 감속
+      } else {
+        settle();
+      }
+    }
+    return {
+      roll: function (n, cb) {
+        done = false; finalVal = n; doneCb = cb; startAt = Date.now();
+        cube.classList.remove('is-nat20', 'is-nat1', 'is-settle');
+        cube.classList.add('is-rolling');
+        tick();
+      },
+      skip: function () { settle(); }
+    };
   }
 
   function buildResultCard(label, result) {
@@ -179,8 +260,15 @@
     renderResults();
   });
 
+  // 화면 탭으로 애니메이션 스킵 (§2.4)
+  el.diceStage.addEventListener('click', function () {
+    if (activeRoller) activeRoller.skip();
+  });
+
   // 처음으로
   function goHome() {
+    if (seqTimer) { clearTimeout(seqTimer); seqTimer = null; }
+    activeRoller = null;
     unmountDice(); // 결과 화면 이탈 시 renderer dispose
     show('home');
   }
