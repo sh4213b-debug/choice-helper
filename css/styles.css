@@ -154,12 +154,6 @@ body {
   color: var(--text-dim);
 }
 
-/* 단독 평가 카드는 핑크 포인트로 "판정" 성격 구분 */
-.type-card--single {
-  border-color: rgba(244, 114, 182, 0.4);
-}
-.type-card--single .type-card__glyph { color: var(--pink-bright); }
-
 @media (max-width: 480px) {
   .type-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .type-card { min-height: 150px; padding: 20px 12px; }
@@ -387,12 +381,6 @@ body {
   font-size: 26px;
   font-weight: 800;
   letter-spacing: -0.01em;
-}
-
-.result-card__meta {
-  margin-top: 6px;
-  font-size: 13px;
-  color: var(--text-dim);
 }
 
 /* 등급별 색 구분 (내추럴20/1의 특별 연출은 v0.2 예정) */

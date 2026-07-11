@@ -222,13 +222,8 @@
     gradeText.className = 'result-card__grade';
     gradeText.textContent = g.ko;
 
-    var meta = document.createElement('div');
-    meta.className = 'result-card__meta';
-    meta.textContent = '등급 ' + g.grade + ' · d20: ' + result.roll;
-
     card.appendChild(name);
     card.appendChild(gradeText);
-    card.appendChild(meta);
     return card;
   }
 
