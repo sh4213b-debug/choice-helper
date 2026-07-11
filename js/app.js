@@ -51,43 +51,47 @@
     historyList: document.getElementById('history-list'),
     historyEmpty: document.getElementById('history-empty'),
     historyBack: document.getElementById('history-back'),
-    gradeTbody: document.getElementById('grade-tbody')
+    gradeScale: document.getElementById('grade-scale')
   };
 
-  // ── 소개 콘텐츠: 등급표 렌더 (dice.js GRADES 기반, 언어 반영) ──
+  // ── 시그니처: 운명의 눈금 (dice.js GRADES 기반, 언어 반영) ──
+  // 20(정상)→1(바닥) 수직 눈금. 각 칸 높이 ∝ 확률(구간 길이).
   function renderGrades() {
-    if (!el.gradeTbody) return;
-    var g = dice.GRADES;
-    el.gradeTbody.innerHTML = '';
+    if (!el.gradeScale) return;
+    var g = dice.GRADES; // 이미 8→1(20→1) 순서
+    el.gradeScale.innerHTML = '';
     for (var i = 0; i < g.length; i++) {
       var row = g[i];
-      var tr = document.createElement('tr');
-      tr.className = 'grade-row grade-row--' + row.tier;
-
+      var span = row.max - row.min + 1;        // 확률 가중치 (1 또는 3)
       var range = row.min === row.max ? String(row.min) : row.min + '–' + row.max;
-      var prob = (row.max - row.min + 1) * 5 + '%';
+      var prob = span * 5 + '%';
 
-      var cRange = document.createElement('td');
-      cRange.className = 'grade-cell grade-cell--range';
-      cRange.textContent = range;
+      var rung = document.createElement('div');
+      rung.className = 'fate-rung fate-rung--' + row.tier;
+      rung.style.flexGrow = String(span);       // 높이 비례
+      rung.setAttribute('aria-label', range + ' · ' + gText(row) + ' · ' + prob);
 
-      var cGrade = document.createElement('td');
-      cGrade.className = 'grade-cell grade-cell--name';
-      var dot = document.createElement('span');
-      dot.className = 'grade-dot grade-dot--' + row.tier;
-      var nm = document.createElement('span');
-      nm.textContent = gText(row);
-      cGrade.appendChild(dot);
-      cGrade.appendChild(nm);
+      var mark = document.createElement('span');
+      mark.className = 'fate-rung__mark';
+      mark.setAttribute('aria-hidden', 'true');
 
-      var cProb = document.createElement('td');
-      cProb.className = 'grade-cell grade-cell--prob';
-      cProb.textContent = prob;
+      var rRange = document.createElement('span');
+      rRange.className = 'fate-rung__range';
+      rRange.textContent = range;
 
-      tr.appendChild(cRange);
-      tr.appendChild(cGrade);
-      tr.appendChild(cProb);
-      el.gradeTbody.appendChild(tr);
+      var rName = document.createElement('span');
+      rName.className = 'fate-rung__name';
+      rName.textContent = gText(row);
+
+      var rProb = document.createElement('span');
+      rProb.className = 'fate-rung__prob';
+      rProb.textContent = prob;
+
+      rung.appendChild(mark);
+      rung.appendChild(rRange);
+      rung.appendChild(rName);
+      rung.appendChild(rProb);
+      el.gradeScale.appendChild(rung);
     }
   }
 

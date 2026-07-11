@@ -76,6 +76,8 @@ README.md       실행·구조·배포 문서
   - WebGL 미지원 시 `app.js`가 CSS fallback 큐브로 자동 대체.
 - **테마 (우주·신비, 참고 핀터레스트 이미지 기반)**: `body`에 절차적 코스믹 배경 — 심우주 그라디언트 + 성운 radial-gradient + 금빛 천체광 + 별먼지, `body::before`(별 트윙클)/`body::after`(성운 드리프트). 외부 이미지 0개. `prefers-reduced-motion` 존중.
 - **홈 레이아웃**: `.home-hero`(첫 화면, 도구 정중앙) + `.home-content`(소개·이용법·등급표·FAQ·신뢰). 선택 카드는 **2×2 그리드 `minmax(0,1fr)`로 네 칸 동일 폭** 고정.
+- **타이포 시스템(3역할)**: 나눔명조(디스플레이+본문) + **시스템 모노 `--mono`**(유틸리티: 아이브로·주사위 눈·확률·데이터). 섹션은 무거운 글래스 카드 대신 금빛 헤어라인 + 모노 아이브로(정적 Latin: About/How it works/…)의 편집형. 아이브로는 i18n 아님(장식 라벨), 제목·본문은 data-i18n.
+- **시그니처 — 운명의 눈금(Fate Scale)**: 등급표를 세로 눈금으로 재해석. `app.js`의 `renderGrades()`가 `#grade-scale`에 rung 생성, **각 rung 높이 ∝ 확률**(`flex-grow=구간길이`). 20(정상, 금빛 발광)→1(바닥, 희미). `.fate-rung--<tier>`가 `--rung` 색 지정. 표(`grade-table`)는 폐기됨.
 
 ---
 

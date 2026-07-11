@@ -64,12 +64,14 @@
       <!-- 서비스 소개·안내 콘텐츠 (고품질 콘텐츠 가이드 반영) -->
       <article class="home-content">
         <section class="info-section" id="about">
+          <span class="eyebrow" aria-hidden="true">About</span>
           <h2 class="info-title" data-i18n="about.h">선택 도우미란?</h2>
           <p class="info-text" data-i18n="about.p1"></p>
           <p class="info-text" data-i18n="about.p2"></p>
         </section>
 
         <section class="info-section" id="guide">
+          <span class="eyebrow" aria-hidden="true">How it works</span>
           <h2 class="info-title" data-i18n="guide.h">이렇게 사용하세요</h2>
           <ol class="step-list">
             <li class="step">
@@ -97,23 +99,20 @@
         </section>
 
         <section class="info-section" id="grades">
+          <span class="eyebrow" aria-hidden="true">The Fate Scale</span>
           <h2 class="info-title" data-i18n="grades.h">등급은 이렇게 정해져요</h2>
           <p class="info-text" data-i18n="grades.p"></p>
-          <div class="grade-table-wrap">
-            <table class="grade-table">
-              <thead>
-                <tr>
-                  <th data-i18n="grades.thRange">주사위 눈</th>
-                  <th data-i18n="grades.thGrade">등급</th>
-                  <th data-i18n="grades.thProb">확률</th>
-                </tr>
-              </thead>
-              <tbody id="grade-tbody"><!-- dice.js GRADES 기반 동적 생성 --></tbody>
-            </table>
+          <div class="fate-legend" aria-hidden="true">
+            <span data-i18n="grades.thRange">주사위 눈</span>
+            <span data-i18n="grades.thGrade">등급</span>
+            <span data-i18n="grades.thProb">확률</span>
           </div>
+          <!-- 운명의 눈금: dice.js GRADES 기반 동적 생성 (높이 ∝ 확률) -->
+          <div class="fate-scale" id="grade-scale"></div>
         </section>
 
         <section class="info-section" id="faq">
+          <span class="eyebrow" aria-hidden="true">Questions</span>
           <h2 class="info-title" data-i18n="faq.h">자주 묻는 질문</h2>
           <div class="faq">
             <div class="faq__item">
@@ -140,6 +139,7 @@
         </section>
 
         <section class="info-section" id="trust">
+          <span class="eyebrow" aria-hidden="true">Privacy</span>
           <h2 class="info-title" data-i18n="trust.h">개인정보와 신뢰</h2>
           <p class="info-text" data-i18n="trust.p"></p>
           <a class="info-link" href="privacy.html" data-i18n="trust.link">개인정보처리방침 전문 보기 →</a>
