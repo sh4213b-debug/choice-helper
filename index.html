@@ -12,61 +12,64 @@
 </head>
 <body>
   <main class="app" id="app">
+    <!-- 우상단 KO/EN 토글 (§2.7) -->
+    <button type="button" class="lang-toggle" id="lang-toggle" aria-label="Language">EN</button>
+
     <!-- 1. 메인: 모드 선택 -->
     <section class="screen screen--home" id="screen-home">
       <div class="oracle-glow" aria-hidden="true"></div>
       <header class="app-header">
-        <h1 class="app-title">선택 도우미</h1>
-        <p class="app-subtitle">운명의 주사위에게 묻다</p>
+        <h1 class="app-title" data-i18n="app.title">선택 도우미</h1>
+        <p class="app-subtitle" data-i18n="home.subtitle">운명의 주사위에게 묻다</p>
       </header>
 
       <div class="type-grid" id="mode-list">
         <button class="type-card" data-count="1">
           <span class="type-card__glyph">A</span>
           <span class="type-card__sub">SINGLE CHOICE</span>
-          <span class="type-card__ko">단독 평가 (A)</span>
+          <span class="type-card__ko" data-i18n="card.1">단독 평가 (A)</span>
         </button>
         <button class="type-card" data-count="2">
           <span class="type-card__glyph">A<em>/</em>B</span>
           <span class="type-card__sub">COMPARISON</span>
-          <span class="type-card__ko">양자택일 (A/B)</span>
+          <span class="type-card__ko" data-i18n="card.2">양자택일 (A/B)</span>
         </button>
         <button class="type-card" data-count="3">
           <span class="type-card__glyph">A<em>/</em>B<em>/</em>C</span>
           <span class="type-card__sub">TRIPLE CHOICE</span>
-          <span class="type-card__ko">삼자택일 (A/B/C)</span>
+          <span class="type-card__ko" data-i18n="card.3">삼자택일 (A/B/C)</span>
         </button>
         <button class="type-card" data-count="4">
           <span class="type-card__glyph">A<em>/</em>B<em>/</em>C<em>/</em>D</span>
           <span class="type-card__sub">MULTI CHOICE</span>
-          <span class="type-card__ko">다중선택 (A/B/C/D)</span>
+          <span class="type-card__ko" data-i18n="card.4">다중선택 (A/B/C/D)</span>
         </button>
       </div>
 
-      <button type="button" class="link-subtle" id="open-history">지난 기록 보기</button>
+      <button type="button" class="link-subtle" id="open-history" data-i18n="home.history">지난 기록 보기</button>
     </section>
 
     <!-- 2. 라벨 입력 -->
     <section class="screen screen--labels is-hidden" id="screen-labels">
       <header class="app-header">
         <h2 class="screen-title" id="labels-title">선택지 이름 붙이기</h2>
-        <p class="app-subtitle">비워두면 A·B·C·D로 표시돼요</p>
+        <p class="app-subtitle" data-i18n="labels.subtitle">비워두면 A·B·C·D로 표시돼요</p>
       </header>
 
       <form class="label-form" id="label-form">
         <div class="label-inputs" id="label-inputs"><!-- 동적 생성 --></div>
         <div class="label-actions">
-          <button type="submit" class="btn btn--primary">주사위 굴리기</button>
-          <button type="button" class="btn btn--ghost" id="skip-btn">건너뛰기</button>
+          <button type="submit" class="btn btn--primary" data-i18n="labels.roll">주사위 굴리기</button>
+          <button type="button" class="btn btn--ghost" id="skip-btn" data-i18n="labels.skip">건너뛰기</button>
         </div>
       </form>
-      <button type="button" class="link-back" id="labels-back">← 처음으로</button>
+      <button type="button" class="link-back" id="labels-back" data-i18n="nav.homeArrow">← 처음으로</button>
     </section>
 
     <!-- 3. 결과 -->
     <section class="screen screen--result is-hidden" id="screen-result">
       <header class="app-header">
-        <h2 class="screen-title">결과</h2>
+        <h2 class="screen-title" data-i18n="result.title">결과</h2>
       </header>
 
       <!-- 3D 주사위 스테이지 (WebGL 미지원 시 CSS fallback 표시) -->
@@ -77,36 +80,37 @@
           <div class="dice-fallback__cube"><span id="dice-fallback-num">20</span></div>
         </div>
         <p class="dice-caption" id="dice-caption"></p>
-        <p class="dice-hint is-hidden" id="dice-hint">화면을 탭하면 건너뛰기</p>
+        <p class="dice-hint is-hidden" id="dice-hint" data-i18n="result.hint">화면을 탭하면 건너뛰기</p>
       </div>
 
-      <p class="tie-banner is-hidden" id="tie-banner">동점이에요! 다시 굴려볼까요?</p>
+      <p class="tie-banner is-hidden" id="tie-banner" data-i18n="result.tie">동점이에요! 다시 굴려볼까요?</p>
 
       <div class="result-list" id="result-list"><!-- 동적 생성 --></div>
 
       <div class="result-actions">
-        <button type="button" class="btn btn--primary" id="reroll-btn">다시 굴리기</button>
-        <button type="button" class="btn btn--ghost" id="share-btn">결과 공유</button>
-        <button type="button" class="btn btn--ghost" id="result-home">처음으로</button>
+        <button type="button" class="btn btn--primary" id="reroll-btn" data-i18n="result.reroll">다시 굴리기</button>
+        <button type="button" class="btn btn--ghost" id="share-btn" data-i18n="result.share">결과 공유</button>
+        <button type="button" class="btn btn--ghost" id="result-home" data-i18n="nav.home">처음으로</button>
       </div>
     </section>
 
     <!-- 4. 히스토리 -->
     <section class="screen screen--history is-hidden" id="screen-history">
       <header class="app-header">
-        <h2 class="screen-title">지난 기록</h2>
-        <p class="app-subtitle">최근 10개 · 이 기기에만 저장됩니다</p>
+        <h2 class="screen-title" data-i18n="history.title">지난 기록</h2>
+        <p class="app-subtitle" data-i18n="history.subtitle">최근 10개 · 이 기기에만 저장됩니다</p>
       </header>
       <div class="history-list" id="history-list"><!-- 동적 생성 --></div>
-      <p class="history-empty is-hidden" id="history-empty">아직 기록이 없어요.</p>
+      <p class="history-empty is-hidden" id="history-empty" data-i18n="history.empty">아직 기록이 없어요.</p>
       <div class="result-actions">
-        <button type="button" class="btn btn--ghost" id="history-back">처음으로</button>
+        <button type="button" class="btn btn--ghost" id="history-back" data-i18n="nav.home">처음으로</button>
       </div>
     </section>
   </main>
 
   <!-- 순수 로직 (DOM 비의존) -->
   <script src="js/dice.js"></script>
+  <script src="js/i18n.js"></script>
   <script src="js/history.js"></script>
   <script src="js/share.js"></script>
   <!-- 3D 주사위 렌더러 (Three.js, ES 모듈 / 로컬 번들). 로드 실패 시 app.js가 CSS fallback으로 동작 -->

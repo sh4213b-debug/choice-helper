@@ -7,6 +7,10 @@
   'use strict';
 
   var dice = window.ChoiceHelper.dice;
+  var i18n = window.ChoiceHelper.i18n;
+
+  // 현재 언어의 등급 텍스트
+  function gText(g) { return i18n.getLang() === 'en' ? g.en : g.ko; }
 
   // A, B, C, D — 라벨 미입력 시 사용하는 기본 이름
   var DEFAULT_LABELS = ['A', 'B', 'C', 'D'];
@@ -99,7 +103,7 @@
       input.className = 'label-input__field';
       input.setAttribute('maxlength', '20');
       input.setAttribute('autocomplete', 'off');
-      input.placeholder = '예: ' + ['짜장면', '짬뽕', '볶음밥', '탕수육'][i];
+      input.placeholder = i18n.ph(i);
       input.dataset.index = String(i);
 
       wrap.appendChild(badge);
@@ -107,7 +111,7 @@
       el.labelInputs.appendChild(wrap);
     }
     el.labelsTitle.textContent =
-      count === 1 ? '무엇을 물어볼까요?' : '선택지 이름 붙이기';
+      count === 1 ? i18n.t('labels.titleSingle') : i18n.t('labels.titleMulti');
   }
 
   // 입력값을 읽어 라벨 확정. 빈 칸은 A/B/C/D로 대체.
@@ -124,6 +128,8 @@
   // ── 결과 렌더링 (v0.2.3: 선택지별 순차 굴림 → 정지 후 카드 공개) ──
   var activeRoller = null; // 현재 굴리는 주사위 (탭 스킵 대상)
   var seqTimer = null;     // 선택지 간 간격 타이머
+  var lastResults = null;  // 언어 변경 시 카드 다시 그리기용
+  var lastLabels = null;
 
   function setActionsVisible(v) {
     el.resultActions.style.visibility = v ? 'visible' : 'hidden';
@@ -133,6 +139,8 @@
     if (seqTimer) { clearTimeout(seqTimer); seqTimer = null; }
     var results = dice.rollAll(state.count);
     var labels = state.labels;
+    lastResults = results;
+    lastLabels = labels;
 
     // 초기화: 카드·배너·액션 숨기고 스테이지 준비
     el.resultList.innerHTML = '';
@@ -151,7 +159,7 @@
       if (i >= results.length) { finishSequence(results); return; }
       var idx = i;
       el.diceCaption.textContent =
-        results.length > 1 ? '굴리는 중 · ' + labels[idx] : '';
+        results.length > 1 ? i18n.t('result.rolling', { label: labels[idx] }) : '';
       activeRoller.roll(results[idx].roll, function () {
         el.resultList.appendChild(buildResultCard(labels[idx], results[idx]));
         i++;
@@ -249,12 +257,12 @@
     name.className = 'result-card__name';
     name.textContent = label;
 
-    var gradeText = document.createElement('div');
-    gradeText.className = 'result-card__grade';
-    gradeText.textContent = g.ko;
+    var grade = document.createElement('div');
+    grade.className = 'result-card__grade';
+    grade.textContent = gText(g);
 
     card.appendChild(name);
-    card.appendChild(gradeText);
+    card.appendChild(grade);
     return card;
   }
 
@@ -300,12 +308,12 @@
   // ── 히스토리 (§2.5) ─────────────────────────────────────────
   function timeAgo(ts) {
     var sec = Math.max(0, (Date.now() - ts) / 1000);
-    if (sec < 60) return '방금 전';
+    if (sec < 60) return i18n.t('time.now');
     var min = Math.floor(sec / 60);
-    if (min < 60) return min + '분 전';
+    if (min < 60) return i18n.t('time.min', { n: min });
     var hr = Math.floor(min / 60);
-    if (hr < 24) return hr + '시간 전';
-    return Math.floor(hr / 24) + '일 전';
+    if (hr < 24) return i18n.t('time.hour', { n: hr });
+    return i18n.t('time.day', { n: Math.floor(hr / 24) });
   }
 
   function renderHistory() {
@@ -320,12 +328,13 @@
       var main = document.createElement('div');
       main.className = 'history-item__main';
 
+      var en = i18n.getLang() === 'en';
       var summary = entry.items.map(function (it) {
-        return it.label + ' — ' + it.ko;
+        return it.label + ' — ' + (en ? it.en : it.ko);
       }).join(' · ');
       var line = document.createElement('div');
       line.className = 'history-item__summary';
-      line.textContent = summary + (entry.tie ? '  (동점!)' : '');
+      line.textContent = summary + (entry.tie ? '  (' + i18n.t('tie.short') + ')' : '');
 
       var time = document.createElement('div');
       time.className = 'history-item__time';
@@ -370,6 +379,32 @@
   el.labelsBack.addEventListener('click', goHome);
   el.resultHome.addEventListener('click', goHome);
   el.historyBack.addEventListener('click', goHome);
+
+  // ── 언어 (§2.7) ─────────────────────────────────────────────
+  document.getElementById('lang-toggle').addEventListener('click', function () {
+    i18n.toggle();
+  });
+
+  // 언어 변경 시 정적 텍스트는 i18n이 갱신하고, 여기서 동적 화면을 다시 그린다
+  i18n.onChange(function () {
+    // 결과 카드(굴림 완료 상태일 때만 다시 그림)
+    var resultVisible = !screens.result.classList.contains('is-hidden');
+    if (resultVisible && lastResults && el.resultActions.style.visibility !== 'hidden') {
+      el.resultList.innerHTML = '';
+      for (var i = 0; i < lastResults.length; i++) {
+        el.resultList.appendChild(buildResultCard(lastLabels[i], lastResults[i]));
+      }
+    }
+    if (!screens.history.classList.contains('is-hidden')) renderHistory();
+    if (!screens.labels.classList.contains('is-hidden')) {
+      el.labelsTitle.textContent =
+        state.count === 1 ? i18n.t('labels.titleSingle') : i18n.t('labels.titleMulti');
+      var fields = el.labelInputs.querySelectorAll('.label-input__field');
+      for (var j = 0; j < fields.length; j++) fields[j].placeholder = i18n.ph(j);
+    }
+  });
+
+  i18n.init(); // 기기 언어 감지 + 저장된 선택 적용
 
   // 초기 화면
   show('home');

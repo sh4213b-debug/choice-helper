@@ -6,8 +6,11 @@
 (function (global) {
   'use strict';
 
-  var APP_NAME = '선택 도우미';
   var FONT = '"Nanum Myeongjo", "Apple SD Gothic Neo", serif';
+
+  function i18n() { return (global.ChoiceHelper && global.ChoiceHelper.i18n) || null; }
+  function appName() { var t = i18n(); return t ? t.t('app.title') : '선택 도우미'; }
+  function isEn() { var t = i18n(); return t ? t.getLang() === 'en' : false; }
 
   // 등급(1~8) → 카드 색
   var GRADE_COLOR = {
@@ -63,13 +66,14 @@
     ctx.textAlign = 'center';
 
     // 타이틀
+    var t = i18n();
     ctx.fillStyle = '#f0c36a';
     ctx.font = '72px ' + FONT;
-    ctx.fillText(APP_NAME, W / 2, 250);
+    ctx.fillText(appName(), W / 2, 250);
 
     ctx.fillStyle = '#cdbfa0';
     ctx.font = '34px ' + FONT;
-    ctx.fillText('운명의 주사위 결과', W / 2, 315);
+    ctx.fillText(t ? t.t('share.subtitle') : '운명의 주사위 결과', W / 2, 315);
 
     // 결과 항목
     var items = data.items || [];
@@ -98,7 +102,7 @@
       ctx.textAlign = 'right';
       ctx.fillStyle = GRADE_COLOR[it.grade] || '#cdbfa0';
       ctx.font = '52px ' + FONT;
-      ctx.fillText(it.ko, W - 160, cy + 18);
+      ctx.fillText((isEn() && it.en) ? it.en : it.ko, W - 160, cy + 18);
     }
 
     // 동점 표시
@@ -106,14 +110,14 @@
       ctx.textAlign = 'center';
       ctx.fillStyle = '#ff9ad8';
       ctx.font = '34px ' + FONT;
-      ctx.fillText('동점!', W / 2, top + rowH * items.length + 46);
+      ctx.fillText(t ? t.t('tie.short') : '동점!', W / 2, top + rowH * items.length + 46);
     }
 
     // 워터마크 (앱 이름 + URL)
     ctx.textAlign = 'center';
     ctx.fillStyle = 'rgba(240,195,106,0.7)';
     ctx.font = '30px ' + FONT;
-    ctx.fillText(APP_NAME + '  ·  ' + watermarkUrl(), W / 2, H - 90);
+    ctx.fillText(appName() + '  ·  ' + watermarkUrl(), W / 2, H - 90);
 
     return canvas;
   }
@@ -143,8 +147,8 @@
       if (canShareFiles && navigator.share) {
         return navigator.share({
           files: [file],
-          title: APP_NAME,
-          text: '운명의 주사위 결과'
+          title: appName(),
+          text: i18n() ? i18n().t('share.subtitle') : '운명의 주사위 결과'
         }).catch(function () { /* 사용자가 취소 */ });
       }
       // 데스크톱 fallback: 다운로드
