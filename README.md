@@ -15,8 +15,9 @@ python3 -m http.server 8000    # → http://127.0.0.1:8000
 ## 구조
 
 ```
-index.html          진입점 / 뷰 마크업
-css/styles.css      스타일 (오라클 테마: 금색·상아 + 딥 자수정, 모바일 우선)
+index.html          진입점 / 뷰 마크업 (도구 + 소개·이용법·등급표·FAQ·신뢰 콘텐츠)
+privacy.html        개인정보처리방침 (한/영)
+css/styles.css      스타일 (우주·신비 테마: 금색·상아 + 별하늘·성운, 모바일 우선)
 fonts/              나눔명조 서브셋 woff2 (OFL, 로컬 번들)
 js/dice.js          순수 로직: d20 굴림 + 8단계 등급 매핑 (DOM 비의존)
 js/i18n.js          다국어(ko/en) 자동감지 + 토글 (localStorage)

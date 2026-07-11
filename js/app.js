@@ -50,8 +50,46 @@
     openHistory: document.getElementById('open-history'),
     historyList: document.getElementById('history-list'),
     historyEmpty: document.getElementById('history-empty'),
-    historyBack: document.getElementById('history-back')
+    historyBack: document.getElementById('history-back'),
+    gradeTbody: document.getElementById('grade-tbody')
   };
+
+  // ── 소개 콘텐츠: 등급표 렌더 (dice.js GRADES 기반, 언어 반영) ──
+  function renderGrades() {
+    if (!el.gradeTbody) return;
+    var g = dice.GRADES;
+    el.gradeTbody.innerHTML = '';
+    for (var i = 0; i < g.length; i++) {
+      var row = g[i];
+      var tr = document.createElement('tr');
+      tr.className = 'grade-row grade-row--' + row.tier;
+
+      var range = row.min === row.max ? String(row.min) : row.min + '–' + row.max;
+      var prob = (row.max - row.min + 1) * 5 + '%';
+
+      var cRange = document.createElement('td');
+      cRange.className = 'grade-cell grade-cell--range';
+      cRange.textContent = range;
+
+      var cGrade = document.createElement('td');
+      cGrade.className = 'grade-cell grade-cell--name';
+      var dot = document.createElement('span');
+      dot.className = 'grade-dot grade-dot--' + row.tier;
+      var nm = document.createElement('span');
+      nm.textContent = gText(row);
+      cGrade.appendChild(dot);
+      cGrade.appendChild(nm);
+
+      var cProb = document.createElement('td');
+      cProb.className = 'grade-cell grade-cell--prob';
+      cProb.textContent = prob;
+
+      tr.appendChild(cRange);
+      tr.appendChild(cGrade);
+      tr.appendChild(cProb);
+      el.gradeTbody.appendChild(tr);
+    }
+  }
 
   // ── 3D 주사위 스테이지 수명 관리 ────────────────────────────
   // 결과 화면 진입 시 생성, 이탈 시 dispose (§3.3 성능).
@@ -395,6 +433,7 @@
         el.resultList.appendChild(buildResultCard(lastLabels[i], lastResults[i]));
       }
     }
+    renderGrades(); // 소개 등급표(항상 홈에 존재) 언어 반영
     if (!screens.history.classList.contains('is-hidden')) renderHistory();
     if (!screens.labels.classList.contains('is-hidden')) {
       el.labelsTitle.textContent =
@@ -405,6 +444,7 @@
   });
 
   i18n.init(); // 기기 언어 감지 + 저장된 선택 적용
+  renderGrades(); // 소개 등급표 초기 렌더
 
   // 초기 화면
   show('home');
