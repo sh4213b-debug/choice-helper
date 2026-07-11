@@ -345,30 +345,26 @@
     show('labels');
   }
 
-  // 데스크톱: 구슬 위에서 휠 → 선택 변경. 양 끝에서는 페이지 스크롤 통과.
+  // 데스크톱: 구슬 위에서 휠 → 선택 변경. 구슬 위에서는 페이지 스크롤을 항상 고정.
   el.orb.addEventListener('wheel', function (e) {
-    var dir = e.deltaY > 0 ? 1 : -1;
-    if ((dir > 0 && sel === 4) || (dir < 0 && sel === 1)) return; // 경계: 페이지 스크롤 허용
     e.preventDefault();
     wheelAcc += e.deltaY;
     if (Math.abs(wheelAcc) >= WHEEL_STEP) {
-      setSel(sel + (wheelAcc > 0 ? 1 : -1));
+      setSel(sel + (wheelAcc > 0 ? 1 : -1)); // 끝에 닿으면 clamp만 되고 페이지는 그대로
       wheelAcc = 0;
     }
   }, { passive: false });
 
-  // 모바일: 구슬 위 세로 스와이프 → 선택 변경 (위로=증가). 양 끝에서는 스크롤 통과.
+  // 모바일: 구슬 위 세로 스와이프 → 선택 변경 (위로=증가). 구슬 위에선 페이지 스크롤 고정.
   var touchY = 0;
   el.orb.addEventListener('touchstart', function (e) {
     touchY = e.touches[0].clientY;
   }, { passive: true });
   el.orb.addEventListener('touchmove', function (e) {
-    var dy = e.touches[0].clientY - touchY;
-    var dir = dy < 0 ? 1 : -1; // 위로 쓸면 증가
-    if ((dir > 0 && sel === 4) || (dir < 0 && sel === 1)) return; // 경계: 페이지 스크롤 허용
     e.preventDefault();
+    var dy = e.touches[0].clientY - touchY;
     if (Math.abs(dy) >= SWIPE_STEP) {
-      setSel(sel + dir);
+      setSel(sel + (dy < 0 ? 1 : -1)); // 위로 쓸면 증가
       touchY = e.touches[0].clientY;
     }
   }, { passive: false });
