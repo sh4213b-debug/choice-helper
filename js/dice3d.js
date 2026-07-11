@@ -33,28 +33,37 @@ function makeNumberTexture(n) {
   c.width = c.height = S;
   var ctx = c.getContext('2d');
 
-  ctx.font = '600 ' + Math.round(S * 0.52) + 'px Georgia, "Times New Roman", serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
   var cx = S / 2, cy = S / 2 + S * 0.02;
   var str = String(n);
 
+  // 번잡한 내부 위에서도 숫자가 읽히도록 어두운 인셋(음각) 후광을 먼저 깐다
+  var bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, S * 0.44);
+  bg.addColorStop(0, 'rgba(18, 6, 30, 0.62)');
+  bg.addColorStop(0.7, 'rgba(18, 6, 30, 0.32)');
+  bg.addColorStop(1, 'rgba(18, 6, 30, 0)');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, S, S);
+
+  ctx.font = '700 ' + Math.round(S * 0.56) + 'px Georgia, "Times New Roman", serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
   // 은은한 발광 후광
-  ctx.shadowColor = 'rgba(240, 168, 130, 0.7)';
-  ctx.shadowBlur = S * 0.07;
+  ctx.shadowColor = 'rgba(255, 190, 150, 0.85)';
+  ctx.shadowBlur = S * 0.08;
 
   // 핑크골드 그라디언트 채움 (#F0A882 계열)
-  var grad = ctx.createLinearGradient(0, S * 0.22, 0, S * 0.78);
-  grad.addColorStop(0, '#ffd0ab');
-  grad.addColorStop(0.5, '#f0a882');
+  var grad = ctx.createLinearGradient(0, S * 0.2, 0, S * 0.8);
+  grad.addColorStop(0, '#ffe0c2');
+  grad.addColorStop(0.5, '#f4b088');
   grad.addColorStop(1, '#e08a6a');
   ctx.fillStyle = grad;
   ctx.fillText(str, cx, cy);
 
-  // 가는 어두운 외곽선 (밝은 면 위에서도 읽히도록)
+  // 어두운 외곽선 (밝은 면 위에서도 또렷하게)
   ctx.shadowBlur = 0;
-  ctx.lineWidth = S * 0.012;
-  ctx.strokeStyle = 'rgba(90, 40, 25, 0.85)';
+  ctx.lineWidth = S * 0.022;
+  ctx.strokeStyle = 'rgba(70, 28, 18, 0.9)';
   ctx.strokeText(str, cx, cy);
 
   // 6/9 구분 밑줄
@@ -157,17 +166,18 @@ function computeFaces(geometry) {
 // 숫자 평면을 면 바깥쪽에 얹는다. 평면 앞면(+Z)이 면 법선(바깥) 방향을 향하므로
 // 바깥에서 보는 카메라 기준으로 좌우반전 없이 정방향으로 읽힌다.
 function makeNumberPlane(face) {
-  var size = DIE_RADIUS * 0.6;
+  var size = DIE_RADIUS * 0.66;
   var geo = new THREE.PlaneGeometry(size, size);
   var mat = new THREE.MeshBasicMaterial({
     map: makeNumberTexture(face.number),
     transparent: true,
     depthWrite: false,
+    depthTest: false, // 삼각 면 경계에서 잘리지 않도록 항상 위에 렌더
     side: THREE.FrontSide, // 앞면만 → 뒤쪽(반전) 숫자는 컬링되어 안 보임
     toneMapped: false
   });
   var plane = new THREE.Mesh(geo, mat);
-  plane.renderOrder = 3;
+  plane.renderOrder = 6; // 글리터(4)·연출(5)보다 위에 그려 숫자가 가려지지 않게
 
   var n = face.normal;
   var q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n);
@@ -202,7 +212,7 @@ function createStage(canvas) {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); // 상한 2
   renderer.setClearAlpha(0);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.1;
+  renderer.toneMappingExposure = 1.2;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   var scene = new THREE.Scene();
@@ -235,7 +245,7 @@ function createStage(canvas) {
   var faces = computeFaces(shellGeom); // position 기준, 법선 재계산 전에
   shellGeom.computeVertexNormals();    // 면별 평면 법선 → 각진 면·모서리 하이라이트
   var shellMat = new THREE.MeshPhysicalMaterial({
-    color: 0x8b5cf6,
+    color: 0xa044e0, // 자수정 보라 (남색 치우침 보정)
     transmission: 0.92,
     thickness: 1.2,
     ior: 1.5,
@@ -243,7 +253,7 @@ function createStage(canvas) {
     metalness: 0.0,
     clearcoat: 1.0,
     clearcoatRoughness: 0.06,
-    attenuationColor: new THREE.Color(0x6d28d9),
+    attenuationColor: new THREE.Color(0x7b2fbe),
     attenuationDistance: 1.5,
     specularIntensity: 1.0,
     iridescence: 0.12,
