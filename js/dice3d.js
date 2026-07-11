@@ -36,21 +36,14 @@ function makeNumberTexture(n) {
   var cx = S / 2, cy = S / 2 + S * 0.02;
   var str = String(n);
 
-  // 번잡한 내부 위에서도 숫자가 읽히도록 어두운 인셋(음각) 후광을 먼저 깐다
-  var bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, S * 0.44);
-  bg.addColorStop(0, 'rgba(18, 6, 30, 0.62)');
-  bg.addColorStop(0.7, 'rgba(18, 6, 30, 0.32)');
-  bg.addColorStop(1, 'rgba(18, 6, 30, 0)');
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, S, S);
-
+  // 배경은 완전 투명(깨끗한 누끼) — 글리프만 남겨 레진 질감이 끊기지 않게 한다
   ctx.font = '700 ' + Math.round(S * 0.56) + 'px Georgia, "Times New Roman", serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
   // 은은한 발광 후광
-  ctx.shadowColor = 'rgba(255, 190, 150, 0.85)';
-  ctx.shadowBlur = S * 0.08;
+  ctx.shadowColor = 'rgba(255, 190, 150, 0.8)';
+  ctx.shadowBlur = S * 0.06;
 
   // 핑크골드 그라디언트 채움 (#F0A882 계열)
   var grad = ctx.createLinearGradient(0, S * 0.2, 0, S * 0.8);
@@ -60,10 +53,10 @@ function makeNumberTexture(n) {
   ctx.fillStyle = grad;
   ctx.fillText(str, cx, cy);
 
-  // 어두운 외곽선 (밝은 면 위에서도 또렷하게)
+  // 가는 어두운 외곽선 (글리프 자체 윤곽만)
   ctx.shadowBlur = 0;
-  ctx.lineWidth = S * 0.022;
-  ctx.strokeStyle = 'rgba(70, 28, 18, 0.9)';
+  ctx.lineWidth = S * 0.018;
+  ctx.strokeStyle = 'rgba(70, 28, 18, 0.85)';
   ctx.strokeText(str, cx, cy);
 
   // 6/9 구분 밑줄
@@ -82,48 +75,84 @@ function makeNumberTexture(n) {
   return tex;
 }
 
-// ── 내부 인클루전용 마블 텍스처 (보라·마젠타·흰색 소용돌이 + 금/오팔 반점) ──
+// ── 내부 인클루전용 마블 텍스처 (흐르는 소용돌이 결 + 금/오팔 반점) ──
 function makeMarbleTexture() {
-  var S = 512;
+  var S = 1024;
   var c = document.createElement('canvas');
   c.width = c.height = S;
   var ctx = c.getContext('2d');
 
-  // 베이스: 짙은 보라
-  ctx.fillStyle = '#2a1147';
+  // 베이스: 짙은 자수정 그라디언트
+  var base = ctx.createLinearGradient(0, 0, S, S);
+  base.addColorStop(0, '#2b1050');
+  base.addColorStop(0.5, '#1a0b33');
+  base.addColorStop(1, '#331454');
+  ctx.fillStyle = base;
   ctx.fillRect(0, 0, S, S);
 
-  // 소용돌이치는 마블: 보라/마젠타/희끗한 흰색 소프트 블롭 다수
-  var swirl = ['#7b2fbe', '#c026d3', '#ede9fe', '#4c1d95', '#a21caf'];
-  for (var i = 0; i < 46; i++) {
-    var x = Math.random() * S, y = Math.random() * S;
-    var r = 40 + Math.random() * 150;
-    var col = swirl[(Math.random() * swirl.length) | 0];
-    var rg = ctx.createRadialGradient(x, y, 0, x, y, r);
-    rg.addColorStop(0, col);
+  // 흐르는 결(vein): 부드러운 곡선 스트로크를 색색으로 겹쳐 마블링
+  var veinCols = ['#7b2fbe', '#c026d3', '#a855f7', '#ede9fe', '#6d28d9'];
+  ctx.lineCap = 'round';
+  for (var s = 0; s < 26; s++) {
+    var x0 = Math.random() * S, y0 = Math.random() * S;
+    var ang = Math.random() * Math.PI * 2;
+    var len = S * (0.4 + Math.random() * 0.6);
+    var steps = 6;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    var px = x0, py = y0, a = ang;
+    for (var k = 0; k < steps; k++) {
+      a += (Math.random() - 0.5) * 1.3;               // 구불구불
+      var seg = len / steps;
+      var nx = px + Math.cos(a) * seg;
+      var ny = py + Math.sin(a) * seg;
+      var mx = (px + nx) / 2 + (Math.random() - 0.5) * 40;
+      var my = (py + ny) / 2 + (Math.random() - 0.5) * 40;
+      ctx.quadraticCurveTo(mx, my, nx, ny);
+      px = nx; py = ny;
+    }
+    ctx.strokeStyle = veinCols[(Math.random() * veinCols.length) | 0];
+    ctx.globalAlpha = 0.10 + Math.random() * 0.22;
+    ctx.shadowColor = ctx.strokeStyle;
+    ctx.shadowBlur = 26 + Math.random() * 40;
+    ctx.lineWidth = 6 + Math.random() * 26;
+    ctx.stroke();
+  }
+  ctx.shadowBlur = 0;
+
+  // 희끗한 하이라이트 구름 (오팔 느낌의 밝은 응어리)
+  var cloud = ['#ede9fe', '#f5d0fe', '#ffffff'];
+  for (var i = 0; i < 14; i++) {
+    var cxp = Math.random() * S, cyp = Math.random() * S;
+    var r = 60 + Math.random() * 160;
+    var rg = ctx.createRadialGradient(cxp, cyp, 0, cxp, cyp, r);
+    rg.addColorStop(0, cloud[(Math.random() * cloud.length) | 0]);
     rg.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.globalAlpha = 0.22 + Math.random() * 0.3;
+    ctx.globalAlpha = 0.08 + Math.random() * 0.16;
     ctx.fillStyle = rg;
     ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.arc(cxp, cyp, r, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // 금박 + 오팔(청록/핑크) 반점
-  var flake = ['#f59e0b', '#fcd34d', '#22d3ee', '#f472b6'];
-  for (var j = 0; j < 140; j++) {
+  // 금박 + 오팔(청록/핑크) 반점 — 큰 플레이크는 살짝 발광
+  var flake = ['#f59e0b', '#fcd34d', '#22d3ee', '#f472b6', '#fde68a'];
+  for (var j = 0; j < 260; j++) {
     var fx = Math.random() * S, fy = Math.random() * S;
-    var fr = 1.5 + Math.random() * 4.5;
+    var fr = 1.5 + Math.random() * 7;
     ctx.globalAlpha = 0.5 + Math.random() * 0.5;
     ctx.fillStyle = flake[(Math.random() * flake.length) | 0];
+    if (fr > 5) { ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 10; }
     ctx.beginPath();
     ctx.arc(fx, fy, fr, 0, Math.PI * 2);
     ctx.fill();
+    ctx.shadowBlur = 0;
   }
   ctx.globalAlpha = 1;
 
   var tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
   return tex;
 }
 
@@ -245,19 +274,23 @@ function createStage(canvas) {
   var faces = computeFaces(shellGeom); // position 기준, 법선 재계산 전에
   shellGeom.computeVertexNormals();    // 면별 평면 법선 → 각진 면·모서리 하이라이트
   var shellMat = new THREE.MeshPhysicalMaterial({
-    color: 0xa044e0, // 자수정 보라 (남색 치우침 보정)
-    transmission: 0.92,
-    thickness: 1.2,
-    ior: 1.5,
-    roughness: 0.08,
+    color: 0xa044e0, // 자수정 보라
+    transmission: 0.9,
+    thickness: 1.6,
+    ior: 1.52,
+    roughness: 0.06,
     metalness: 0.0,
     clearcoat: 1.0,
-    clearcoatRoughness: 0.06,
+    clearcoatRoughness: 0.05,
     attenuationColor: new THREE.Color(0x7b2fbe),
-    attenuationDistance: 1.5,
+    attenuationDistance: 1.3,
     specularIntensity: 1.0,
-    iridescence: 0.12,
-    iridescenceIOR: 1.3,
+    sheen: 0.6,
+    sheenRoughness: 0.35,
+    sheenColor: new THREE.Color(0xff9ad8), // 부드러운 핑크 벨벳 하이라이트
+    iridescence: 0.18,
+    iridescenceIOR: 1.32,
+    envMapIntensity: 1.8,
     transparent: true,
     side: THREE.FrontSide
   });
