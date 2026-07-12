@@ -14,16 +14,11 @@
   src: url('../fonts/song-myung.woff2') format('woff2');
   font-weight: 400; font-style: normal; font-display: swap;
 }
-/* 메인 제목 전용 장식 서체 (OFL, 제목 글자만 서브셋).
-   영문=Lobster(스와시 볼 터미널), 한글=나눔손글씨 붓(붓 캘리그래피). */
+/* 메인 제목 전용 장식 서체 — Diphylleia(OFL, 한글+Latin, 제목 글자만 서브셋).
+   단일 굵기(400)라 '굵게'는 text-stroke로 합성한다. */
 @font-face {
-  font-family: 'Lobster';
-  src: url('../fonts/lobster.woff2') format('woff2');
-  font-weight: 400; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'Nanum Brush Title';
-  src: url('../fonts/nanum-brush-title.woff2') format('woff2');
+  font-family: 'Diphylleia';
+  src: url('../fonts/diphylleia-title.woff2') format('woff2');
   font-weight: 400; font-style: normal; font-display: swap;
 }
 
@@ -156,15 +151,17 @@ body::after {
 .app-header { text-align: center; margin-bottom: 24px; }
 
 .app-title {
-  /* 장식 제목: 영문 Lobster → 한글 나눔붓 → 폴백 */
-  font-family: 'Lobster', 'Nanum Brush Title', var(--display);
-  font-size: clamp(52px, 15vw, 76px);
+  /* 장식 제목: Diphylleia (한글+영문 공통), 굵게는 text-stroke로 합성 */
+  font-family: 'Diphylleia', var(--display);
+  font-size: clamp(46px, 13.5vw, 68px);
   font-weight: 400;
-  line-height: 1.05;
+  line-height: 1.08;
   margin: 0 0 6px;
   letter-spacing: 0.01em;
   color: var(--gold);
-  text-shadow: 0 0 22px rgba(240, 195, 106, 0.55), 0 3px 10px rgba(0, 0, 0, 0.55);
+  -webkit-text-stroke: 1.4px var(--gold); /* 단일 굵기 폰트 → 획을 두껍게(굵게) */
+  paint-order: stroke fill;
+  text-shadow: 0 0 22px rgba(240, 195, 106, 0.5), 0 3px 10px rgba(0, 0, 0, 0.55);
 }
 
 .screen-title {
