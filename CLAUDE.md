@@ -50,7 +50,8 @@ index.html      진입점. <head>에 AdSense·Clarity·폰트 프리로드. <bod
 privacy.html    개인정보처리방침 (한/영, 독립 정적 페이지). AdSense·Clarity 스니펫 포함
 ads.txt         AdSense 소유권 확인 (pub-7162141013722955)
 css/styles.css  전체 스타일 (우주·신비 테마: 성운 영상 배경 + 금빛·상아 + 송명/나눔명조)
-fonts/          nanum-myeongjo.woff2(본문) + song-myung.woff2(디스플레이) — 둘 다 OFL 서브셋 로컬 번들
+fonts/          nanum-myeongjo.woff2(본문) + song-myung.woff2(디스플레이 세리프)
+                + lobster.woff2(제목 영문 스와시) + nanum-brush-title.woff2(제목 한글 붓) — 모두 OFL 서브셋
 assets/         bg-nebula.mp4(움직이는 배경, 1080p 772KB) + bg-nebula.jpg(poster/폴백, 1440×2880)
 js/dice.js      순수 로직: d20 굴림 + 8단계 등급 매핑 (DOM 비의존, SSOT)
 js/i18n.js      다국어(ko/en) 자동감지 + 토글 (localStorage), [data-i18n] 자동 갱신
@@ -80,7 +81,7 @@ README.md       실행·구조·배포 문서
   - WebGL 미지원 시 `app.js`가 CSS fallback 큐브로 자동 대체.
 - **테마 (우주·신비)**: 배경은 **움직이는 성운 영상**(`.bg-video`, 고정 풀블리드, z-index -10) + `body::before` 정지 이미지 폴백(z-index -11) + `body::after` 가독성 비네트(z-index -9). `prefers-reduced-motion` 시 영상 숨김. 영상/이미지는 참고 핀 성운을 Higgsfield로 가공(업스케일·image-to-video)해 로컬 번들. (이전의 절차적 CSS 성운/별먼지는 이 영상 배경으로 대체됨.)
 - **홈 히어로 = 수정구슬 선택기(시그니처)**: 카드 그리드 폐기. 중앙 유리 구슬(`#orb`, role=slider) 위에서 **휠 스크롤/세로 스와이프/화살표키**로 선택지 개수 1~4를 바꾸면 구슬 안 글리프가 A→A/B→A/B/C→A/B/C/D로 맺힘(`GLYPHS` in app.js `paintOrb/setSel`). 점 인디케이터 + `card.N` 설명. 양 끝에서는 페이지 스크롤 통과(스크롤 트랩 방지). `#orb-go`(Enter/Space)로 라벨 화면 진행. `.home-content`(소개·이용법·Fate Scale·FAQ·신뢰)는 그 아래.
-- **타이포 시스템(3역할)**: **디스플레이 `--display` = 송명(Song Myung, OFL, `fonts/song-myung.woff2` 서브셋 40KB)** — 제목·섹션헤딩·구슬 글리프·눈금 등급명·문서 헤딩에 적용(고대비 천체 알마낙 톤). **본문 `--serif` = 나눔명조**(긴 콘텐츠 가독). **유틸리티 `--mono` = 시스템 모노**(아이브로·주사위 눈·확률). 섹션은 금빛 헤어라인 + 모노 아이브로(정적 Latin) 편집형. 송명 서브셋은 앱 전체 한글+Latin 텍스트 기준(`fontTools.subset --text-file`)이라 표시 글리프 누락 없음 — 새 한글 카피 추가 시 서브셋 재생성 필요.
+- **타이포 시스템(3역할)**: **디스플레이 `--display` = 송명(Song Myung, OFL, `fonts/song-myung.woff2` 서브셋 40KB)** — 제목·섹션헤딩·구슬 글리프·눈금 등급명·문서 헤딩에 적용(고대비 천체 알마낙 톤). **본문 `--serif` = 나눔명조**(긴 콘텐츠 가독). **유틸리티 `--mono` = 시스템 모노**(아이브로·주사위 눈·확률). **메인 제목 `.app-title`만 장식 서체**: 영문=Lobster(스와시), 한글=나눔손글씨 붓 — 스택 `'Lobster','Nanum Brush Title',var(--display)`로 언어별 폴백. 이 둘은 **제목 글자만 서브셋**(선택 도우미/Choice Helper) — 앱 이름이 바뀌면 재서브셋 필요. 송명 서브셋은 앱 전체 한글+Latin 기준이라 표시 글리프 누락 없음(새 한글 카피 추가 시 재생성).
 - **시그니처 — 운명의 눈금(Fate Scale)**: 등급표를 세로 눈금으로 재해석. `app.js`의 `renderGrades()`가 `#grade-scale`에 rung 생성, **각 rung 높이 ∝ 확률**(`flex-grow=구간길이`). 20(정상, 금빛 발광)→1(바닥, 희미). `.fate-rung--<tier>`가 `--rung` 색 지정. 표(`grade-table`)는 폐기됨.
 
 ---
@@ -99,6 +100,7 @@ README.md       실행·구조·배포 문서
 7. **수정구슬 시그니처 개편**: 카드 그리드 폐기, 중앙 유리 구슬 스크롤/스와이프 선택기 + 성운 이미지 배경 + 주사위 보라·마젠타 로즈골드. (`0e7b93e`)
 8. **구슬 스크롤 고정 버그 수정** + 배경 4K 업스케일(정지). (`41cab61`)
 9. **움직이는 성운 영상 배경**(Higgsfield 1080p, x264 772KB) + **송명 디스플레이 폰트** 페어링. (`a031c4b`)
+10. **메인 제목 장식 서체**: Lobster(영문)+나눔붓(한글)을 `.app-title`에만 크게 적용(OFL, 제목 글자 서브셋).
 
 > 이후 새 작업을 하면 이 목록에 한 줄씩 추가한다(커밋 해시 포함).
 

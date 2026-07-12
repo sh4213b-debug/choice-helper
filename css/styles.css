@@ -14,6 +14,18 @@
   src: url('../fonts/song-myung.woff2') format('woff2');
   font-weight: 400; font-style: normal; font-display: swap;
 }
+/* 메인 제목 전용 장식 서체 (OFL, 제목 글자만 서브셋).
+   영문=Lobster(스와시 볼 터미널), 한글=나눔손글씨 붓(붓 캘리그래피). */
+@font-face {
+  font-family: 'Lobster';
+  src: url('../fonts/lobster.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Nanum Brush Title';
+  src: url('../fonts/nanum-brush-title.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
 
 :root {
   /* 오라클 팔레트 (배경 이미지에서 추출) */
@@ -144,14 +156,15 @@ body::after {
 .app-header { text-align: center; margin-bottom: 24px; }
 
 .app-title {
-  font-family: var(--display);
-  font-size: 34px;
+  /* 장식 제목: 영문 Lobster → 한글 나눔붓 → 폴백 */
+  font-family: 'Lobster', 'Nanum Brush Title', var(--display);
+  font-size: clamp(52px, 15vw, 76px);
   font-weight: 400;
-  line-height: 1.1;
-  margin: 0 0 4px;
-  letter-spacing: 0.06em;
+  line-height: 1.05;
+  margin: 0 0 6px;
+  letter-spacing: 0.01em;
   color: var(--gold);
-  text-shadow: 0 0 18px rgba(240, 195, 106, 0.5), 0 2px 6px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 0 22px rgba(240, 195, 106, 0.55), 0 3px 10px rgba(0, 0, 0, 0.55);
 }
 
 .screen-title {
