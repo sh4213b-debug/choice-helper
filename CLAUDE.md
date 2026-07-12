@@ -31,8 +31,8 @@
 ## 2. 하드 제약 (반드시 유지 — 변경하려면 사용자 확인 필수)
 
 - **광고**: 원래 "광고 금지"였으나 **소유자 지시로 Google AdSense 게재로 변경됨**(client `ca-pub-7162141013722955`). 스크립트는 `index.html`·`privacy.html` `<head>`에, 소유권 확인은 루트 `ads.txt`. 광고 목적의 제3자 쿠키(Google)는 허용. **개인정보처리방침·홈 신뢰 문구는 이에 맞춰 갱신 완료** — 광고 관련 문구를 다시 "없음"으로 되돌리지 말 것.
-- **분석**: 원래 "트래킹 금지"였으나 **소유자 지시로 Microsoft Clarity 추가**(세션 리플레이·히트맵, 태그 `xku0dlbv7y`). 스크립트는 `index.html`·`privacy.html` `<head>`. 개인정보처리방침·홈 신뢰 문구를 이에 맞게 갱신 완료(§3 "쿠키·분석·추적", trust.p) — "분석/추적 없음"으로 되돌리지 말 것.
-- **자체 서버 저장은 여전히 없음.** 사용자가 입력한 선택지·굴림 기록·설정은 로컬(localStorage)에만 저장, 우리 서버 전송 없음. 외부 호출은 **AdSense·Clarity·(폴백 아닌)없음** 3가지로 한정 — 그 외 새 외부 호출은 추가 전 확인.
+- **분석**: 원래 "트래킹 금지"였으나 **소유자 지시로 Google Analytics(GA4, `G-TR5GBCYV1H`) + Microsoft Clarity(`xku0dlbv7y`) 추가**. 두 스니펫 모두 `index.html`·`privacy.html` `<head>`(GA는 상단, Clarity는 og 태그 뒤). 개인정보처리방침·홈 신뢰 문구를 이에 맞게 갱신 완료(§3 "쿠키·분석·추적", trust.p) — "분석/추적 없음"으로 되돌리지 말 것.
+- **자체 서버 저장은 여전히 없음.** 사용자가 입력한 선택지·굴림 기록·설정은 로컬(localStorage)에만 저장, 우리 서버 전송 없음. 외부 호출은 **AdSense·Google Analytics·Clarity** 로 한정 — 그 외 새 외부 호출은 추가 전 확인.
 - **외부 이미지/텍스처/HDRI 파일의 런타임 로드(CDN·외부 URL) 금지** — 3D 텍스처·환경맵은 캔버스/RoomEnvironment 절차 생성. **예외: 홈 배경은 소유자 지시로 참고 핀 이미지를 로컬 번들(`assets/bg-nebula.jpg`)해 사용**(외부 hotlink 아님). 현재 배경은 **움직이는 영상**(`assets/bg-nebula.mp4`, Higgsfield seedance 1080p image-to-video, `<video class="bg-video" autoplay muted loop playsinline>`) + **정지 poster/폴백**(`assets/bg-nebula.jpg`, 4K 업스케일 후 1440×2880). `prefers-reduced-motion` 시 영상 숨기고 이미지 사용. 저작권은 소유자 판단(수익화 전 라이선스/자체 이미지 교체 권고).
 - **Three.js 외 추가 라이브러리 금지** (로컬 번들, 버전 고정).
 - **확정 기획 임의 변경 금지.**
